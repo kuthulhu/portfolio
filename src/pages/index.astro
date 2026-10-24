@@ -1,11 +1,17 @@
 ---
-import Welcome from '../components/Welcome.astro';
 import Layout from '../layouts/Layout.astro';
-
-// Welcome to Astro! Wondering what to do next? Check out the Astro documentation at https://docs.astro.build
-// Don't want to use any of this? Delete everything in this file, the `assets`, `components`, and `layouts` directories, and start fresh.
+import { work } from '../data/site';
 ---
 
 <Layout>
-	<Welcome />
+  <ul class="flex flex-col gap-5">
+    {
+      work.map((item) => (
+        <li>
+          <h2 class="text-h4">{item.href ? <a href={item.href} class="link">{item.title}</a> : item.title}</h2>
+          <p class="text-body-sm text-muted tabular-nums">{item.year}</p>
+        </li>
+      ))
+    }
+  </ul>
 </Layout>

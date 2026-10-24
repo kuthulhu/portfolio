@@ -1,0 +1,18 @@
+---
+import Avatar from '../assets/ax.svg';
+import { site } from '../data/site';
+---
+
+<header transition:animate="none">
+  <Avatar width={64} height={64} fill="currentColor" aria-hidden="true" class="text-fg" />
+
+  <h1 class="mt-10 text-h1">{site.name}</h1>
+  <p>
+    {site.roleHref ? <a href={site.roleHref} class="link">{site.role}</a> : site.role}
+  </p>
+  <p class="mt-6">
+    <a href={site.portfolio.href} target="_blank" rel="noopener" class="link text-accent decoration-accent/30 [@media(hover:hover)_and_(pointer:fine)]:hover:decoration-accent">
+      {site.portfolio.label}<span> -></span>
+    </a>
+  </p>
+</header>
