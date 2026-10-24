@@ -13,7 +13,7 @@ Personal website of Kutlu Can Günay, product designer. A small, quiet site with
 
 ## Running locally
 
-Requires Node.js 22.12 or newer.
+Requires Node.js 22.23.4 or newer.
 
 ```sh
 npm install
