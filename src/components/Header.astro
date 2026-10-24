@@ -11,8 +11,9 @@ import { site } from '../data/site';
     {site.roleHref ? <a href={site.roleHref} class="link">{site.role}</a> : site.role}
   </p>
   <p class="mt-6">
-    <a href={site.portfolio.href} target="_blank" rel="noopener" class="link text-accent decoration-accent/30 [@media(hover:hover)_and_(pointer:fine)]:hover:decoration-accent">
-      {site.portfolio.label}<span> -></span>
+    <a href={site.portfolio.href} target="_blank" rel="noopener" class="link">
+      {site.portfolio.label}
     </a>
   </p>
+ 
 </header>

@@ -19,6 +19,9 @@ export const tabs = [
 
 export type WorkItem = {
   title: string;
+  company?: string;
+  // Leave out for full-time roles.
+  type?: 'Contract' | 'Freelance' | 'Part-time' | 'Internship';
   // A single year ('2026') or a range ('2024–2026'). Keep the quotes:
   // without them, 2024-2026 is read as subtraction.
   year: string;
@@ -26,8 +29,8 @@ export type WorkItem = {
 };
 
 export const work: WorkItem[] = [
-  { title: 'Lead Product Designer at Climateware', year: '2024 - 2026' },
-  { title: 'Lead UX/UI Designer at springfox', year: '2023 - 2024' },
-  { title: 'UX/UI Designer at Semtrio', year: '2021 - 2023' },
-  { title: 'UI Designer at Win2Win', year: '2019 - 2020', },
+  { title: 'Lead Product Designer', company: 'Climateware', year: '2024 - 2026' },
+  { title: 'Lead UX/UI Designer', company: 'springfox', year: '2023 - 2024' },
+  { title: 'UX/UI Designer', company: 'Semtrio', year: '2021 - 2023' },
+  { title: 'UI Designer', company: 'Win2Win', year: '2019 - 2020', type: 'Contract' },
 ];
