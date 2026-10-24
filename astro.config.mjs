@@ -3,6 +3,8 @@ import { defineConfig, fontProviders } from 'astro/config';
 import tailwindcss from '@tailwindcss/vite';
 // https://astro.build/config
 export default defineConfig({
+  // Your live domain. Needed for full URLs in link previews (og:url, og:image).
+  // site: 'https://your-domain.com',
   fonts: [
     {
       provider: fontProviders.google(),

@@ -7,7 +7,12 @@ export const site = {
   roleHref: undefined as string | undefined,
   // Link shown under the role. Opens in a new tab.
   portfolio: { label: 'Visit Portfolio', href: 'https://behance.net/kuthulhu' },
-  description: 'Personal website and portfolio.',
+  // Shown in search results and link previews (aim for under ~155 characters).
+  description:
+    'Kutlu Can Günay is a product designer focused on design systems and turning complex products into clear, intuitive interfaces.',
+  // Link preview image: a 1200×630 file in /public, e.g. '/og.png'.
+  // Only used once `site` (your domain) is set in astro.config.mjs.
+  ogImage: undefined as string | undefined,
 };
 
 // Tabs render in this order. To add one: add an entry here and create the
@@ -21,7 +26,7 @@ export type WorkItem = {
   title: string;
   company?: string;
   // Leave out for full-time roles.
-  type?: 'Contract' | 'Freelance' | 'Part-time' | 'Internship';
+  type?: 'Contract' | 'Freelance' | 'Part-time';
   // A single year ('2026') or a range ('2024–2026'). Keep the quotes:
   // without them, 2024-2026 is read as subtraction.
   year: string;
