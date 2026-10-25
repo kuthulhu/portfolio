@@ -1,0 +1,64 @@
+---
+import type { ImageMetadata } from 'astro';
+import { Image } from 'astro:assets';
+import { work } from '../../data/site';
+
+const images = import.meta.glob<{ default: ImageMetadata }>(
+  '../../assets/works/*.{jpg,jpeg,png,webp,avif}',
+  { eager: true },
+);
+
+const getImage = (name: string) => {
+  const image = images[`../../assets/works/${name}`];
+  if (!image) throw new Error(`No image found at src/assets/works/${name}`);
+  return image.default;
+};
+---
+
+{/* Previews are positioned out of the list's flow, so hovering never shifts it. */}
+<ul class="relative flex flex-col gap-5">
+  {
+    work.map((item) => (
+      <li class="work-item group">
+        {/* The link's ::after stretches over this wrapper, so the whole row is clickable. */}
+        <div class="relative">
+          <h2 class="text-h4 transition-colors duration-150 ease-out group-focus-within:text-accent group-hover:text-accent motion-reduce:transition-none">
+            {item.href ? (
+              <a href={item.href} class="link after:absolute after:inset-0">{item.title}</a>
+            ) : (
+              <span class="underline decoration-transparent decoration-2 underline-offset-5 transition-colors duration-150 ease-out group-hover:decoration-line motion-reduce:transition-none">
+                {item.title}
+              </span>
+            )}
+            {item.company && <>{' '}<span class="text-muted">at {item.company}</span></>}
+          </h2>
+          <p class="text-body-sm text-muted mt-1 tabular-nums">
+            {item.year}
+            {item.type && <> ({item.type})</>}
+          </p>
+        </div>
+        <figure
+          aria-hidden="true"
+          class="work-preview pointer-events-none absolute top-0 right-0 hidden w-[320px] md:block"
+        >
+          {/* An inset ring on an <img> is painted under the picture, so the border sits on ::after. */}
+          <div class="shadow-thumb after:ring-thumb-border relative rounded-lg after:absolute after:inset-0 after:rounded-lg after:ring-1 after:ring-inset">
+            {item.image ? (
+              <Image
+                src={getImage(item.image)}
+                alt=""
+                width={640}
+                class="aspect-video w-full rounded-lg object-cover"
+              />
+            ) : (
+              <div class="bg-line aspect-video w-full rounded-lg" />
+            )}
+          </div>
+          {item.description && (
+            <figcaption class="text-body-sm text-muted mt-3">{item.description}</figcaption>
+          )}
+        </figure>
+      </li>
+    ))
+  }
+</ul>

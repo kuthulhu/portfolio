@@ -150,6 +150,19 @@
     transition-timing-function: var(--ease-gentle);
   }
 
+  /* Active-tab underline. Its position is set from Tabs.astro; it only glides
+     when a tab is picked, not when it is first placed or the fonts load. */
+  .tab-indicator {
+    width: var(--tab-width, 0);
+    translate: var(--tab-x, 0) 0;
+  }
+
+  .tab-indicator[data-animate] {
+    transition-property: translate, width;
+    transition-duration: 240ms;
+    transition-timing-function: var(--ease-out);
+  }
+
   @media (prefers-reduced-motion: reduce) {
     .work-item:hover .work-preview,
     .work-item:focus-within .work-preview {
@@ -158,8 +171,3 @@
   }
 }
 
-/* The active-tab underline glides to the new tab during navigation. */
-::view-transition-group(tab-indicator) {
-  animation-duration: 240ms;
-  animation-timing-function: var(--ease-out);
-}

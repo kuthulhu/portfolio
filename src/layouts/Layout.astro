@@ -1,7 +1,6 @@
 ---
 import { Font, Image } from 'astro:assets';
 import backdrop from '../assets/back1.png';
-import { ClientRouter, fade } from 'astro:transitions';
 import Header from '../components/Header.astro';
 import Tabs from '../components/Tabs.astro';
 import { site } from '../data/site';
@@ -44,20 +43,18 @@ const ogImage = Astro.site && site.ogImage && new URL(site.ogImage, Astro.site);
 		<title>{pageTitle}</title>
 		<Font cssVariable="--font-inter" preload={[{ weight: '400' }]} />
 		<Font cssVariable="--font-inter-tight" preload={[{ weight: '400' }]} />
-		<ClientRouter />
 	</head>
 	<body>
 		<Image
 			src={backdrop}
 			alt=""
 			loading="eager"
-			transition:animate="none"
 			class="pointer-events-none absolute top-0 right-0 w-[260px] select-none sm:w-[404px] dark:opacity-40"
 		/>
 		<div class="relative mx-auto max-w-[800px] pt-16 pr-[max(1.5rem,env(safe-area-inset-right))] pb-24 pl-[max(1.5rem,env(safe-area-inset-left))] sm:px-10 sm:pt-[72px]">
 			<Header />
 			<Tabs />
-			<main class="mt-4" transition:animate={fade({ duration: '150ms' })}>
+			<main class="mt-4">
 				<slot />
 			</main>
 		</div>

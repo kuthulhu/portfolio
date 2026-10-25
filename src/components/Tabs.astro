@@ -1,38 +1,82 @@
 ---
 import { tabs } from '../data/site';
-
-const path = Astro.url.pathname.replace(/\/$/, '') || '/';
-const isActive = (href: string) => (href === '/' ? path === '/' : path === href || path.startsWith(`${href}/`));
 ---
 
-<nav aria-label="Sections" transition:animate="none" class="-mx-6 mt-14 overflow-x-auto px-6 [scrollbar-width:none] sm:mx-0 sm:px-0">
-  <ul class="flex gap-6">
+<nav aria-label="Sections" class="-mx-6 mt-14 overflow-x-auto px-6 [scrollbar-width:none] sm:mx-0 sm:px-0">
+  {/* Tabs switch panels in place, so the URL never changes. */}
+  <div role="tablist" class="relative flex gap-6">
     {
-      tabs.map((tab) => {
-        const active = isActive(tab.href);
-        return (
-          <li class="shrink-0">
-            <a
-              href={tab.href}
-              aria-current={active ? 'page' : undefined}
-              class:list={[
-                'relative block py-2 transition-colors duration-150',
-                active ? 'text-fg' : 'text-muted [@media(hover:hover)_and_(pointer:fine)]:hover:text-fg',
-              ]}
-            >
-              {tab.label}
-              {active && (
-                <span
-                  aria-hidden="true"
-                  transition:name="tab-indicator"
-                  transition:animate="initial"
-                  class="absolute inset-x-0 bottom-0.5 h-0.5 rounded-full bg-line"
-                />
-              )}
-            </a>
-          </li>
-        );
-      })
+      tabs.map((tab, i) => (
+        <button
+          type="button"
+          role="tab"
+          id={`tab-${tab.id}`}
+          aria-controls={`panel-${tab.id}`}
+          aria-selected={i === 0 ? 'true' : 'false'}
+          tabindex={i === 0 ? 0 : -1}
+          class="block shrink-0 cursor-pointer py-2 text-muted transition-colors duration-150 aria-selected:text-fg [@media(hover:hover)_and_(pointer:fine)]:hover:text-fg"
+        >
+          {tab.label}
+        </button>
+      ))
     }
-  </ul>
+    <span aria-hidden="true" data-tab-indicator class="tab-indicator absolute bottom-0.5 left-0 h-0.5 rounded-full bg-line"></span>
+  </div>
 </nav>
+
+<script>
+  const tablist = document.querySelector<HTMLElement>('[role="tablist"]')!;
+  const tabs = [...tablist.querySelectorAll<HTMLButtonElement>('[role="tab"]')];
+  const indicator = tablist.querySelector<HTMLElement>('[data-tab-indicator]')!;
+  const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)');
+  const panelOf = (tab: HTMLElement) => document.getElementById(tab.getAttribute('aria-controls')!)!;
+
+  let active = tabs.find((tab) => tab.ariaSelected === 'true') ?? tabs[0];
+
+  const placeIndicator = (animate: boolean) => {
+    indicator.toggleAttribute('data-animate', animate && !reduceMotion.matches);
+    indicator.style.setProperty('--tab-x', `${active.offsetLeft}px`);
+    indicator.style.setProperty('--tab-width', `${active.offsetWidth}px`);
+  };
+
+  const select = (tab: HTMLButtonElement) => {
+    if (tab === active) return;
+    for (const t of tabs) {
+      const selected = t === tab;
+      t.setAttribute('aria-selected', String(selected));
+      t.tabIndex = selected ? 0 : -1;
+      panelOf(t).hidden = !selected;
+    }
+    active = tab;
+    placeIndicator(true);
+    if (!reduceMotion.matches) {
+      panelOf(tab).animate({ opacity: [0, 1] }, { duration: 150, easing: 'ease-out' });
+    }
+  };
+
+  tablist.addEventListener('click', (event) => {
+    const tab = (event.target as Element).closest<HTMLButtonElement>('[role="tab"]');
+    if (tab) select(tab);
+  });
+
+  // Arrow keys, Home and End move between tabs, following the WAI-ARIA tabs pattern.
+  tablist.addEventListener('keydown', (event) => {
+    const i = tabs.indexOf(document.activeElement as HTMLButtonElement);
+    if (i === -1) return;
+    const next = {
+      ArrowRight: tabs[(i + 1) % tabs.length],
+      ArrowLeft: tabs[(i - 1 + tabs.length) % tabs.length],
+      Home: tabs[0],
+      End: tabs[tabs.length - 1],
+    }[event.key];
+    if (!next) return;
+    event.preventDefault();
+    next.focus();
+    select(next);
+  });
+
+  // Also runs once on load. Tab widths shift when the web font swaps in, so
+  // the underline is re-placed (without gliding) whenever a tab resizes.
+  const observer = new ResizeObserver(() => placeIndicator(false));
+  for (const tab of tabs) observer.observe(tab);
+</script>

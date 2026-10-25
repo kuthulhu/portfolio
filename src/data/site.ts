@@ -15,12 +15,13 @@ export const site = {
   ogImage: '/og.jpg' as string | undefined,
 };
 
-// Tabs render in this order. To add one: add an entry here and create the
-// matching page in src/pages (e.g. href '/explorations' → src/pages/explorations.astro).
+// Tabs render in this order, all on the home page; the first one opens by
+// default. To add one: add an entry here, create its panel in
+// src/components/panels and register it under the same id in src/pages/index.astro.
 export const tabs = [
-  { label: 'Work', href: '/' },
-  { label: 'Tools', href: '/tools' },
-  { label: 'About', href: '/about' },
+  { id: 'work', label: 'Work' },
+  { id: 'tools', label: 'Tools' },
+  { id: 'about', label: 'About' },
 ];
 
 export type WorkItem = {
