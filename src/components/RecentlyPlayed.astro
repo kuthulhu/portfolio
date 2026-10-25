@@ -64,6 +64,11 @@ import Vinyl from '../assets/Vinyl.svg';
   const label = root.querySelector<HTMLElement>('[data-track]')!;
   const button = root.querySelector<HTMLButtonElement>('[data-vinyl-button]')!;
   const embed = root.querySelector<HTMLElement>('[data-spotify-embed]')!;
+  const vinyl = button.querySelector<SVGElement>('.vinyl')!;
+
+  // How long before the end the label fades out and the vinyl slows to rest.
+  // Spotify's player has no volume control, so the audio itself can't fade.
+  const WIND_DOWN_MS = 2000;
 
   // Resolves with the embed's controller once Spotify's player is ready to play.
   const loadPlayer = (uri: string) =>
@@ -90,7 +95,29 @@ import Vinyl from '../assets/Vinyl.svg';
     label.title = title;
     button.disabled = false;
 
+    // Last position the player reported, and when, so it can be estimated between updates.
+    let playback = { position: 0, duration: 0, at: 0 };
+    let frame = 0;
+
+    // 1 while playing normally, falling to 0 over the last WIND_DOWN_MS. Scales the
+    // label's opacity and the spin's playback rate; changing the rate (rather than
+    // the duration) slows the record from its current angle without a jump.
+    const windDown = (factor: number) => {
+      label.style.opacity = factor < 1 ? String(factor) : '';
+      vinyl.getAnimations()[0]?.updatePlaybackRate(factor);
+    };
+
+    const tick = () => {
+      const remaining = playback.duration - (playback.position + performance.now() - playback.at);
+      windDown(playback.duration > 0 ? Math.min(Math.max(remaining / WIND_DOWN_MS, 0), 1) : 1);
+      frame = requestAnimationFrame(tick);
+    };
+
     const setPlaying = (playing: boolean) => {
+      cancelAnimationFrame(frame);
+      // Back to full speed while stopped, ready for the next play.
+      if (playing) frame = requestAnimationFrame(tick);
+      else windDown(1);
       root.toggleAttribute('data-playing', playing);
       // The song is only shown while it plays; the label fades in each time.
       label.hidden = !playing;
@@ -110,9 +137,11 @@ import Vinyl from '../assets/Vinyl.svg';
     // Driven by the player's own updates, so the state also stays right when
     // playback stops on its own. At the end of the track the player can report
     // its position at the full duration without pausing, so that counts as stopped.
-    controller.addListener('playback_update', ({ data }) =>
-      setPlaying(!data.isPaused && !(data.duration > 0 && data.position >= data.duration)),
-    );
+    controller.addListener('playback_update', ({ data }) => {
+      playback = { position: data.position, duration: data.duration, at: performance.now() };
+      const playing = !data.isPaused && !(data.duration > 0 && data.position >= data.duration);
+      if (playing !== root.hasAttribute('data-playing')) setPlaying(playing);
+    });
   };
 
   load().catch(() => {});
