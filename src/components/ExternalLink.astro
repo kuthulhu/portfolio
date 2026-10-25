@@ -1,0 +1,19 @@
+---
+import ArrowUpRight from '../assets/Arrows/ArrowUpRight.svg';
+
+interface Props {
+  href: string;
+  class?: string;
+}
+
+const { href, class: className } = Astro.props;
+---
+
+<a href={href} target="_blank" rel="noopener" class:list={['link', className]}
+  ><slot /><ArrowUpRight
+    width="0.875em"
+    height="0.875em"
+    aria-hidden="true"
+    class="ml-0.5 inline-block align-[-0.05em]"
+  /><span class="sr-only"> (opens in a new tab)</span></a
+>
