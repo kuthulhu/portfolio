@@ -37,8 +37,9 @@ const ogImage = Astro.site && site.ogImage && new URL(site.ogImage, Astro.site);
 		<meta name="twitter:card" content={ogImage ? 'summary_large_image' : 'summary'} />
 		<meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)" />
 		<meta name="theme-color" content="#0e0e0f" media="(prefers-color-scheme: dark)" />
+		<link rel="icon" href="/favicon.ico" sizes="32x32" />
 		<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-		<link rel="icon" href="/favicon.ico" />
+		<link rel="apple-touch-icon" href="/apple-touch-icon.png" />
 		<meta name="generator" content={Astro.generator} />
 		<title>{pageTitle}</title>
 		<Font cssVariable="--font-inter" preload={[{ weight: '400' }]} />
