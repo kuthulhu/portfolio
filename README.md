@@ -2,7 +2,7 @@
 
 Personal website of Kutlu Can Günay, product designer. A small, quiet site with my work history and a bit about me.
 
-**Live:** [your-domain.com](https://your-domain.com) · **Portfolio:** [behance.net/kuthulhu](https://behance.net/kuthulhu)
+**Live:** [kutlucangunay.com](https://kutlucangunay.com) · **Portfolio:** [behance.net/kuthulhu](https://behance.net/kuthulhu)
 
 ## Built with
 
