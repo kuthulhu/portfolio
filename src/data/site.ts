@@ -10,9 +10,9 @@ export const site = {
   // Shown in search results and link previews (aim for under ~155 characters).
   description:
     'Kutlu Can Günay is a product designer focused on design systems and turning complex products into clear, intuitive interfaces.',
-  // Link preview image: a 1200×630 file in /public, e.g. '/og.png'.
-  // Only used once `site` (your domain) is set in astro.config.mjs.
-  ogImage: undefined as string | undefined,
+  // Link preview image: a 1200×630 file in /public. Keep it small (JPG, < 300 KB)
+  // so WhatsApp and others don't skip it. The domain is added at build time.
+  ogImage: '/og.jpg' as string | undefined,
 };
 
 // Tabs render in this order. To add one: add an entry here and create the
