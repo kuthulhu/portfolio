@@ -5,7 +5,6 @@
   --fg: #0a0a0a;
   --muted: #9b9ba1;
   --line: #ebebee;
-  --line-strong: #e300ae;
   --accent: #e300ae;
   --ease-out: cubic-bezier(0.23, 1, 0.32, 1);
   color-scheme: light dark;
@@ -17,7 +16,7 @@
     --fg: #ededee;
     --muted: #77777d;
     --line: #29292c;
-    --line-strong: #4a4a50;
+    --accent: #ff5cd1; /* lighter tint of the light-mode #e300ae, reads better on dark */
   }
 }
 
@@ -109,7 +108,7 @@
 
   @media (hover: hover) and (pointer: fine) {
     .link:hover {
-      text-decoration-color: var(--line-strong);
+      text-decoration-color: var(--accent);
     }
   }
 }
