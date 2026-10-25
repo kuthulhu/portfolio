@@ -28,6 +28,12 @@ import Vinyl from '../assets/Vinyl.svg';
   >
     <Vinyl width={48} height={48} aria-hidden="true" class="vinyl" />
   </button>
+  {/* Spotify's embedded player, replaced by its iframe once the iFrame API loads.
+      Kept invisible but on screen (1px, transparent) rather than display: none,
+      since browsers throttle frames they consider hidden. The vinyl drives it. */}
+  <div aria-hidden="true" inert class="pointer-events-none absolute right-0 bottom-0 size-px overflow-hidden opacity-0">
+    <div data-spotify-embed></div>
+  </div>
 </div>
 
 <script>
@@ -35,12 +41,41 @@ import Vinyl from '../assets/Vinyl.svg';
     songName: string;
     artistName: string;
     trackUrl: string;
-    previewUrl: string | null;
+  }
+
+  // The parts of Spotify's iFrame API used here:
+  // https://developer.spotify.com/documentation/embeds/references/iframe-api
+  interface PlaybackUpdate {
+    data: { isPaused: boolean; position: number; duration: number };
+  }
+  interface EmbedController {
+    togglePlay(): void;
+    addListener(event: 'playback_update', callback: (update: PlaybackUpdate) => void): void;
+  }
+  interface IFrameAPI {
+    createController(
+      element: HTMLElement,
+      options: { uri: string; width: number; height: number },
+      callback: (controller: EmbedController) => void,
+    ): void;
   }
 
   const root = document.querySelector<HTMLElement>('[data-recently-played]')!;
   const label = root.querySelector<HTMLElement>('[data-track]')!;
   const button = root.querySelector<HTMLButtonElement>('[data-vinyl-button]')!;
+  const embed = root.querySelector<HTMLElement>('[data-spotify-embed]')!;
+
+  // Resolves with the embed's controller once Spotify's player is ready to play.
+  const loadPlayer = (uri: string) =>
+    new Promise<EmbedController>((resolve, reject) => {
+      (window as Window & { onSpotifyIframeApiReady?: (api: IFrameAPI) => void }).onSpotifyIframeApiReady = (api) =>
+        api.createController(embed, { uri, width: 300, height: 80 }, resolve);
+      const script = document.createElement('script');
+      script.src = 'https://open.spotify.com/embed/iframe-api/v1';
+      script.async = true;
+      script.onerror = reject;
+      document.head.append(script);
+    });
 
   const load = async () => {
     const base = import.meta.env.BASE_URL.replace(/\/?$/, '/');
@@ -48,42 +83,36 @@ import Vinyl from '../assets/Vinyl.svg';
     if (!res.ok) return;
     const track: RecentlyPlayed = await res.json();
     const title = `${track.songName} by ${track.artistName}`;
+    const trackId = new URL(track.trackUrl).pathname.split('/').pop();
 
     label.querySelector('[data-song]')!.textContent = track.songName;
     label.querySelector('[data-artist]')!.textContent = track.artistName;
     label.title = title;
     button.disabled = false;
 
-    if (!track.previewUrl) {
-      button.removeAttribute('aria-pressed');
-      button.ariaLabel = `Open ${title} on Spotify`;
-      button.addEventListener('click', () => window.open(track.trackUrl, '_blank', 'noopener'));
-      return;
-    }
-
-    const audio = new Audio(track.previewUrl);
-    audio.preload = 'none';
-
     const setPlaying = (playing: boolean) => {
       root.toggleAttribute('data-playing', playing);
       // The song is only shown while it plays; the label fades in each time.
       label.hidden = !playing;
       button.ariaPressed = String(playing);
-      button.ariaLabel = `${playing ? 'Pause' : 'Play'} a preview of ${title}`;
+      button.ariaLabel = `${playing ? 'Pause' : 'Play'} ${title}`;
     };
     setPlaying(false);
 
-    // Driven by the audio's own events, so the state also stays right when
-    // playback stops on its own (the 30-second preview ends, or loading fails).
-    audio.addEventListener('play', () => setPlaying(true));
-    audio.addEventListener('pause', () => setPlaying(false));
-    audio.addEventListener('ended', () => setPlaying(false));
-    audio.addEventListener('error', () => setPlaying(false));
-
+    // Until the player is ready (or if it is blocked), the vinyl opens the song on Spotify instead.
+    let controller: EmbedController | undefined;
     button.addEventListener('click', () => {
-      if (audio.paused) audio.play().catch(() => setPlaying(false));
-      else audio.pause();
+      if (controller) controller.togglePlay();
+      else window.open(track.trackUrl, '_blank', 'noopener');
     });
+
+    controller = await loadPlayer(`spotify:track:${trackId}`);
+    // Driven by the player's own updates, so the state also stays right when
+    // playback stops on its own. At the end of the track the player can report
+    // its position at the full duration without pausing, so that counts as stopped.
+    controller.addListener('playback_update', ({ data }) =>
+      setPlaying(!data.isPaused && !(data.duration > 0 && data.position >= data.duration)),
+    );
   };
 
   load().catch(() => {});

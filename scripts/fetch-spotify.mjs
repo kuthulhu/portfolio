@@ -30,18 +30,6 @@ const getAccessToken = async () => {
   return access_token;
 };
 
-// Spotify returns a null preview_url for most tracks, so look the song up on iTunes instead.
-const findItunesPreview = async (songName, artistName) => {
-  const term = encodeURIComponent(`${songName} ${artistName}`);
-  try {
-    const { results } = await getJson(`https://itunes.apple.com/search?term=${term}&entity=song&limit=1`);
-    return results[0]?.previewUrl ?? null;
-  } catch (error) {
-    console.warn(`iTunes lookup failed: ${error.message}`);
-    return null;
-  }
-};
-
 const token = await getAccessToken();
 const { items } = await getJson('https://api.spotify.com/v1/me/player/recently-played?limit=1', {
   headers: { Authorization: `Bearer ${token}` },
@@ -53,14 +41,11 @@ if (!track) {
   process.exit(0);
 }
 
-const songName = track.name;
-const artistName = track.artists.map((artist) => artist.name).join(', ');
 const payload = {
-  songName,
-  artistName,
+  songName: track.name,
+  artistName: track.artists.map((artist) => artist.name).join(', '),
   trackUrl: track.external_urls.spotify,
-  previewUrl: track.preview_url ?? (await findItunesPreview(songName, artistName)),
 };
 
 await writeFile(OUTPUT, `${JSON.stringify(payload, null, 2)}\n`);
-console.log(`Wrote ${songName} by ${artistName} (preview: ${payload.previewUrl ? 'yes' : 'none'})`);
+console.log(`Wrote ${payload.songName} by ${payload.artistName}`);
