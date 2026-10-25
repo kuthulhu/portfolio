@@ -6,7 +6,7 @@ export const site = {
   // Optional link for the role line (e.g. your company). Set to undefined to render plain text.
   roleHref: undefined as string | undefined,
   // Link shown under the role. Opens in a new tab.
-  portfolio: { label: 'Visit Portfolio', href: 'https://behance.net/kuthulhu' },
+  portfolio: { label: 'View All Works on Behance', href: 'https://behance.net/kuthulhu' },
   // Shown in search results and link previews (aim for under ~155 characters).
   description:
     'Kutlu Can Günay is a product designer focused on design systems and turning complex products into clear, intuitive interfaces.',
@@ -62,7 +62,7 @@ export const work: WorkItem[] = [
     company: 'Semtrio',
     year: '2021 - 2023',
     image: 'semtrio.png',
-    description: 'Designed responsive enterprise web platforms, built wireframes and high-fidelity prototypes, and established design system workflows that streamlined front-end handoffs',
+    description: 'Designed responsive enterprise web platforms, built wireframes and high-fidelity prototypes, and established design system workflows that streamlined front-end handoffs.',
     href: 'https://www.behance.net/gallery/251072201/Semtrio-Brand-Refresh',
   },
   {

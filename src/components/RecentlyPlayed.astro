@@ -1,0 +1,90 @@
+---
+import Vinyl from '../assets/Vinyl.svg';
+---
+
+{/* Filled in from /spotify.json, which .github/workflows/update-spotify.yml keeps current. */}
+<div
+  data-recently-played
+  class="fixed right-[max(16px,env(safe-area-inset-right))] bottom-[max(16px,env(safe-area-inset-bottom))]"
+>
+  {/* Positioned off the vinyl so showing it never moves the vinyl. Two body-sm
+      lines plus py-px and the border come to 48px, the vinyl's height.
+      Width is capped at the space left of the vinyl: viewport minus both gutters, the 48px vinyl and the gap. */}
+  <p
+    data-track
+    hidden
+    class="recently-played-label pointer-events-none absolute inset-y-0 right-full my-auto mr-2 h-fit w-max max-w-[min(240px,calc(100vw-88px))] rounded-md border border-line bg-bg/85 px-2.5 py-px text-right text-body-sm backdrop-blur-sm"
+  >
+    <span data-song class="block truncate font-medium text-fg"></span>
+    <span data-artist class="block truncate text-muted"></span>
+  </p>
+  <button
+    type="button"
+    data-vinyl-button
+    disabled
+    aria-pressed="false"
+    aria-label="Recently played"
+    class="cursor-pointer rounded-full text-fg disabled:cursor-default"
+  >
+    <Vinyl width={48} height={48} aria-hidden="true" class="vinyl" />
+  </button>
+</div>
+
+<script>
+  interface RecentlyPlayed {
+    songName: string;
+    artistName: string;
+    trackUrl: string;
+    previewUrl: string | null;
+  }
+
+  const root = document.querySelector<HTMLElement>('[data-recently-played]')!;
+  const label = root.querySelector<HTMLElement>('[data-track]')!;
+  const button = root.querySelector<HTMLButtonElement>('[data-vinyl-button]')!;
+
+  const load = async () => {
+    const base = import.meta.env.BASE_URL.replace(/\/?$/, '/');
+    const res = await fetch(`${base}spotify.json`, { cache: 'no-cache' });
+    if (!res.ok) return;
+    const track: RecentlyPlayed = await res.json();
+    const title = `${track.songName} by ${track.artistName}`;
+
+    label.querySelector('[data-song]')!.textContent = track.songName;
+    label.querySelector('[data-artist]')!.textContent = track.artistName;
+    label.title = title;
+    button.disabled = false;
+
+    if (!track.previewUrl) {
+      button.removeAttribute('aria-pressed');
+      button.ariaLabel = `Open ${title} on Spotify`;
+      button.addEventListener('click', () => window.open(track.trackUrl, '_blank', 'noopener'));
+      return;
+    }
+
+    const audio = new Audio(track.previewUrl);
+    audio.preload = 'none';
+
+    const setPlaying = (playing: boolean) => {
+      root.toggleAttribute('data-playing', playing);
+      // The song is only shown while it plays; the label fades in each time.
+      label.hidden = !playing;
+      button.ariaPressed = String(playing);
+      button.ariaLabel = `${playing ? 'Pause' : 'Play'} a preview of ${title}`;
+    };
+    setPlaying(false);
+
+    // Driven by the audio's own events, so the state also stays right when
+    // playback stops on its own (the 30-second preview ends, or loading fails).
+    audio.addEventListener('play', () => setPlaying(true));
+    audio.addEventListener('pause', () => setPlaying(false));
+    audio.addEventListener('ended', () => setPlaying(false));
+    audio.addEventListener('error', () => setPlaying(false));
+
+    button.addEventListener('click', () => {
+      if (audio.paused) audio.play().catch(() => setPlaying(false));
+      else audio.pause();
+    });
+  };
+
+  load().catch(() => {});
+</script>

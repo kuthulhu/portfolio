@@ -163,7 +163,34 @@
     transition-timing-function: var(--ease-out);
   }
 
+  /* Recently played vinyl. The spin is always attached and only paused, so
+     pausing holds the record at its current angle instead of snapping to 0deg. */
+  .vinyl {
+    animation: vinyl-spin 3s linear infinite paused;
+  }
+
+  [data-recently-played][data-playing] .vinyl {
+    animation-play-state: running;
+  }
+
+  .recently-played-label {
+    animation: recently-played-in 300ms var(--ease-gentle);
+  }
+
+  @keyframes vinyl-spin {
+    to { rotate: 360deg; }
+  }
+
+  @keyframes recently-played-in {
+    from { opacity: 0; translate: 4px 0; }
+  }
+
   @media (prefers-reduced-motion: reduce) {
+    .vinyl,
+    .recently-played-label {
+      animation: none;
+    }
+
     .work-item:hover .work-preview,
     .work-item:focus-within .work-preview {
       transition: none;

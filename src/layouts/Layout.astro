@@ -1,7 +1,7 @@
 ---
 import { Font, Image } from 'astro:assets';
 import backdrop from '../assets/back1.png';
-import Vinyl from '../assets/Vinyl.svg';
+import RecentlyPlayed from '../components/RecentlyPlayed.astro';
 import { site } from '../data/site';
 import '../styles/global.css';
 
@@ -53,11 +53,6 @@ const ogImage = Astro.site && site.ogImage && new URL(site.ogImage, Astro.site);
 		<div class="relative mx-auto max-w-[800px] pt-16 pr-[max(1.5rem,env(safe-area-inset-right))] pb-24 pl-[max(1.5rem,env(safe-area-inset-left))] sm:px-10 sm:pt-[72px]">
 			<slot />
 		</div>
-		<Vinyl
-			width={48}
-			height={48}
-			aria-hidden="true"
-			class="pointer-events-none fixed right-[max(16px,env(safe-area-inset-right))] bottom-[max(16px,env(safe-area-inset-bottom))] text-fg"
-		/>
+		<RecentlyPlayed />
 	</body>
 </html>
