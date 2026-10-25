@@ -1,0 +1,16 @@
+---
+import BearReading from '../assets/Bear reading.svg';
+import Layout from '../layouts/Layout.astro';
+---
+
+{/* Built as 404.html, which GitHub Pages serves for any missing URL. */}
+<Layout title="Page not found">
+  <main>
+    <BearReading width={64} height={64} aria-hidden="true" class="text-fg" />
+
+    <h1 class="mt-10 text-h1">The Page You're Looking For Doesn't Exist.</h1>
+    <p class="mt-6">
+      <a href={import.meta.env.BASE_URL} class="link">Back to homepage</a>
+    </p>
+  </main>
+</Layout>

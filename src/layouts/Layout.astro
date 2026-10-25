@@ -2,8 +2,6 @@
 import { Font, Image } from 'astro:assets';
 import backdrop from '../assets/back1.png';
 import Vinyl from '../assets/Vinyl.svg';
-import Header from '../components/Header.astro';
-import Tabs from '../components/Tabs.astro';
 import { site } from '../data/site';
 import '../styles/global.css';
 
@@ -53,11 +51,7 @@ const ogImage = Astro.site && site.ogImage && new URL(site.ogImage, Astro.site);
 			class="pointer-events-none absolute top-0 right-0 w-[260px] select-none sm:w-[404px] dark:opacity-40"
 		/>
 		<div class="relative mx-auto max-w-[800px] pt-16 pr-[max(1.5rem,env(safe-area-inset-right))] pb-24 pl-[max(1.5rem,env(safe-area-inset-left))] sm:px-10 sm:pt-[72px]">
-			<Header />
-			<Tabs />
-			<main class="mt-4">
-				<slot />
-			</main>
+			<slot />
 		</div>
 		<Vinyl
 			width={48}

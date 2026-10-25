@@ -1,4 +1,6 @@
 ---
+import Header from '../components/Header.astro';
+import Tabs from '../components/Tabs.astro';
 import About from '../components/panels/About.astro';
 import Tools from '../components/panels/Tools.astro';
 import Work from '../components/panels/Work.astro';
@@ -14,15 +16,19 @@ const panels: Record<string, (props: Record<string, unknown>) => unknown> = {
 ---
 
 <Layout>
-  {
-    tabs.map((tab, i) => {
-      const Panel = panels[tab.id];
-      if (!Panel) throw new Error(`No panel registered for tab '${tab.id}' in src/pages/index.astro`);
-      return (
-        <section id={`panel-${tab.id}`} role="tabpanel" aria-labelledby={`tab-${tab.id}`} hidden={i !== 0}>
-          <Panel />
-        </section>
-      );
-    })
-  }
+  <Header />
+  <Tabs />
+  <main class="mt-4">
+    {
+      tabs.map((tab, i) => {
+        const Panel = panels[tab.id];
+        if (!Panel) throw new Error(`No panel registered for tab '${tab.id}' in src/pages/index.astro`);
+        return (
+          <section id={`panel-${tab.id}`} role="tabpanel" aria-labelledby={`tab-${tab.id}`} hidden={i !== 0}>
+            <Panel />
+          </section>
+        );
+      })
+    }
+  </main>
 </Layout>
