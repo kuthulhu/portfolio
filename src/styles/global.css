@@ -7,6 +7,18 @@
   --line: #ebebee;
   --accent: #e300ae;
   --ease-out: cubic-bezier(0.23, 1, 0.32, 1);
+  /* Softer than --ease-out: the motion spreads evenly instead of landing in the first frames. */
+  --ease-gentle: cubic-bezier(0.25, 0.46, 0.45, 0.94);
+  /* Layered so it reads as soft depth, not a single gray blur. */
+  /* Inner edge on thumbnails. Contrasts with the page, so it shows where an
+     image would otherwise blend into the background. */
+  --thumb-border: rgb(0 0 0 / 0.08);
+  --thumb-shadow:
+    0 0 0 1px rgb(0 0 0 / 0.04),
+    0 1px 2px rgb(0 0 0 / 0.04),
+    0 4px 8px -2px rgb(0 0 0 / 0.05),
+    0 12px 24px -6px rgb(0 0 0 / 0.08),
+    0 24px 48px -12px rgb(0 0 0 / 0.1);
   color-scheme: light dark;
 }
 
@@ -17,6 +29,12 @@
     --muted: #77777d;
     --line: #29292c;
     --accent: #ff5cd1; /* lighter tint of the light-mode #e300ae, reads better on dark */
+    --thumb-border: rgb(255 255 255 / 0.08);
+    /* Shadows barely show on a near-black page, so a faint light edge carries the depth. */
+    --thumb-shadow:
+      0 0 0 1px rgb(255 255 255 / 0.06),
+      0 12px 24px -6px rgb(0 0 0 / 0.5),
+      0 24px 48px -12px rgb(0 0 0 / 0.6);
   }
 }
 
@@ -26,6 +44,8 @@
   --color-muted: var(--muted);
   --color-line: var(--line);
   --color-accent: var(--accent);
+  --color-thumb-border: var(--thumb-border);
+  --shadow-thumb: var(--thumb-shadow);
   --font-sans: var(--font-inter);
   --font-heading: var(--font-inter-tight);
 }
@@ -109,6 +129,31 @@
   @media (hover: hover) and (pointer: fine) {
     .link:hover {
       text-decoration-color: var(--accent);
+    }
+  }
+
+  /* Work thumbnail: eases in when its row is hovered or focused, and
+     disappears instantly on leave (the transition lives on the shown state only). */
+  .work-preview {
+    opacity: 0;
+    translate: 0 4px;
+    scale: 0.98;
+  }
+
+  .work-item:hover .work-preview,
+  .work-item:focus-within .work-preview {
+    opacity: 1;
+    translate: 0 0;
+    scale: 1;
+    transition-property: opacity, translate, scale;
+    transition-duration: 300ms;
+    transition-timing-function: var(--ease-gentle);
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .work-item:hover .work-preview,
+    .work-item:focus-within .work-preview {
+      transition: none;
     }
   }
 }

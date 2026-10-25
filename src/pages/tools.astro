@@ -1,0 +1,50 @@
+---
+import ExternalLink from '../components/ExternalLink.astro';
+import Layout from '../layouts/Layout.astro';
+import { hardware, software } from '../data/site';
+
+type SvgComponent = (props: Record<string, unknown>) => unknown;
+
+const icons = import.meta.glob<{ default: SvgComponent }>('../assets/{tools,hardware}/*.svg', {
+  eager: true,
+});
+
+const getIcon = (folder: 'tools' | 'hardware', name: string) => {
+  const icon = icons[`../assets/${folder}/${name}.svg`];
+  if (!icon) throw new Error(`No icon found at src/assets/${folder}/${name}.svg`);
+  return icon.default;
+};
+---
+
+<Layout title="Tools">
+  <div class="grid gap-10 sm:grid-cols-[3fr_7fr]">
+    <section class="flex flex-col gap-3">
+      <h2 class="text-body-sm text-muted">Software</h2>
+      <ul class="flex flex-col gap-3">
+        {software.map((item) => {
+          const Logo = getIcon('tools', item.logo);
+          return (
+            <li class="flex items-center gap-3">
+              <Logo width="20" height="20" aria-hidden="true" class="shrink-0" />
+              {item.href ? <ExternalLink href={item.href}>{item.name}</ExternalLink> : item.name}
+            </li>
+          );
+        })}
+      </ul>
+    </section>
+    <section class="flex flex-col gap-3">
+      <h2 class="text-body-sm text-muted">Hardware</h2>
+      <ul class="flex flex-col gap-3">
+        {hardware.map((item) => {
+          const Icon = getIcon('hardware', item.icon);
+          return (
+            <li class="flex items-center gap-3">
+              <Icon width="20" height="20" aria-hidden="true" class="shrink-0" />
+              {item.name}
+            </li>
+          );
+        })}
+      </ul>
+    </section>
+  </div>
+</Layout>
