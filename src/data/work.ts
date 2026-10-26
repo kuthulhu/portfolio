@@ -75,12 +75,6 @@ export const work: WorkRole[] = [
         href: 'https://www.behance.net/gallery/162211785/Peerless-Ventures',
       },
       {
-        title: 'Climateware, Branding',
-        year: '2022',
-        image: 'climateware.png',
-        href: 'https://www.behance.net/gallery/162160845/Climateware-Bright-side-of-innovation',
-      },
-      {
         title: 'Nextep, Branding and App Design',
         year: '2022',
         image: 'nextep.png',
@@ -97,12 +91,6 @@ export const work: WorkRole[] = [
         year: '2026',
         image: 'semtrio.png',
         href: 'https://www.behance.net/gallery/251072201/Semtrio-Brand-Refresh',
-      },
-      {
-        title: 'Conference Branding for Semtrio',
-        year: '2022',
-        image: 'semtrio-con.png',
-        href: 'https://www.behance.net/gallery/151103635/Semtrio-Branding-for-Digital-Transformation-Conf',
       },
       {
         title: 'Co2mission Platform for Turkish Airlines',
