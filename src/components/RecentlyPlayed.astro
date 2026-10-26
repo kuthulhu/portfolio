@@ -49,7 +49,7 @@ import Vinyl from '../assets/Vinyl.svg';
   // The parts of Spotify's iFrame API used here:
   // https://developer.spotify.com/documentation/embeds/references/iframe-api
   interface PlaybackUpdate {
-    data: { isPaused: boolean; position: number; duration: number };
+    data: { isPaused: boolean; isBuffering: boolean; position: number; duration: number };
   }
   interface EmbedController {
     togglePlay(): void;
@@ -140,10 +140,11 @@ import Vinyl from '../assets/Vinyl.svg';
     setPlaying(false);
 
     // A tap is shown at once, before Spotify has fetched the audio, so there's no
-    // visible delay. Until the player confirms, updates that still report the old
-    // state are ignored; `reported` is what the player last said.
+    // visible delay. Until the player confirms, its updates are ignored; `reported`
+    // is what the player last said, and `requestedAt` the position when play was tapped.
     let expected: boolean | undefined;
     let reported = false;
+    let requestedAt = 0;
     let confirmTimer = 0;
 
     const request = (playing: boolean) => {
@@ -151,6 +152,7 @@ import Vinyl from '../assets/Vinyl.svg';
         // The position is frozen until the player reports again, and a finished track restarts.
         const position = playback.position >= playback.duration ? 0 : playback.position;
         playback = { ...playback, position, at: performance.now() };
+        requestedAt = position;
       }
       expected = playing;
       setPlaying(playing);
@@ -177,10 +179,16 @@ import Vinyl from '../assets/Vinyl.svg';
     // playback stops on its own. At the end of the track the player can report
     // its position at the full duration without pausing, so that counts as stopped.
     controller.addListener('playback_update', ({ data }) => {
+      // While the audio loads, the player's reports flip between paused and
+      // playing, which would hide and re-show the label. Wait for it to settle.
+      if (data.isBuffering) return;
       playback = { position: data.position, duration: data.duration, at: performance.now() };
       reported = !data.isPaused && !(data.duration > 0 && data.position >= data.duration);
       if (expected !== undefined) {
-        if (reported !== expected) return;
+        // A tapped play only counts as confirmed once the position moves past where
+        // it started, i.e. sound is actually coming through, not just a "playing" report.
+        const confirmed = expected ? reported && data.position > requestedAt : !reported;
+        if (!confirmed) return;
         expected = undefined;
         clearTimeout(confirmTimer);
       }
