@@ -6,8 +6,8 @@
   --muted: #9b9ba1;
   --line: #ebebee;
   --accent: #e300ae;
-  --ease-out: cubic-bezier(0.23, 1, 0.32, 1);
-  /* Softer than --ease-out: the motion spreads evenly instead of landing in the first frames. */
+  --ease-snappy: cubic-bezier(0.23, 1, 0.32, 1);
+  /* Softer than --ease-snappy: the motion spreads evenly instead of landing in the first frames. */
   --ease-gentle: cubic-bezier(0.25, 0.46, 0.45, 0.94);
   /* Layered so it reads as soft depth, not a single gray blur. */
   /* Inner edge on thumbnails. Contrasts with the page, so it shows where an
@@ -87,11 +87,6 @@
 }
 
 @layer base {
-  html {
-    -webkit-text-size-adjust: 100%;
-    -webkit-tap-highlight-color: transparent;
-  }
-
   body {
     background: var(--bg);
     color: var(--fg);
@@ -105,7 +100,6 @@
      so the visual size can differ from the semantic level. */
   :is(h1, h2, h3, h4) {
     font-family: var(--font-heading);
-    font-weight: 500;
   }
   h1 { @apply text-h1; }
   h2 { @apply text-h2; }
@@ -163,7 +157,7 @@
   .tab-indicator[data-animate] {
     transition-property: translate, width;
     transition-duration: 240ms;
-    transition-timing-function: var(--ease-out);
+    transition-timing-function: var(--ease-snappy);
   }
 
   /* Recently played vinyl. The spin is always attached and only paused, so
