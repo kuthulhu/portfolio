@@ -10,8 +10,8 @@ import Vinyl from '../assets/Vinyl.svg';
   data-recently-played
   class="fixed right-[max(16px,env(safe-area-inset-right))] bottom-[max(16px,env(safe-area-inset-bottom))]"
 >
-  {/* Positioned off the vinyl so showing it never moves the vinyl. Two body-sm
-      lines plus py-px and the border come to 48px, the vinyl's height.
+  {/* Positioned off the vinyl so showing it never moves the vinyl. A body-sm and a
+      body-xs line plus py-px and the border come to 44px, within the vinyl's 48px.
       Width is capped at the space left of the vinyl: viewport minus both gutters, the 48px vinyl and the gap. */}
   <p
     data-track
@@ -19,7 +19,7 @@ import Vinyl from '../assets/Vinyl.svg';
     class="recently-played-label pointer-events-none absolute inset-y-0 right-full my-auto mr-2 h-fit w-max max-w-[min(240px,calc(100vw-88px))] rounded-md border border-line bg-bg/85 px-2.5 py-px text-right text-body-sm backdrop-blur-sm"
   >
     <span data-song class="block truncate font-medium text-fg"></span>
-    <span data-artist class="block truncate text-muted"></span>
+    <span data-artist class="block truncate text-body-xs text-muted"></span>
   </p>
   <button
     type="button"
@@ -27,7 +27,7 @@ import Vinyl from '../assets/Vinyl.svg';
     disabled
     aria-pressed="false"
     aria-label="Recently played"
-    class="cursor-pointer rounded-full text-fg disabled:cursor-default"
+    class="block cursor-pointer rounded-full text-fg disabled:cursor-default"
   >
     <Vinyl width={48} height={48} aria-hidden="true" class="vinyl" />
   </button>

@@ -50,7 +50,7 @@
   --font-heading: var(--font-inter-tight);
 }
 
-/* Type scale. Each token becomes a class: text-h1 … text-h4, text-body-lg/md/sm.
+/* Type scale. Each token becomes a class: text-h1 … text-h4, text-body-lg/md/sm/xs.
    Headings are Inter Tight (set below); body sizes are Inter. */
 @theme {
   --text-h1: 32px;
@@ -81,6 +81,9 @@
 
   --text-body-sm: 14px;
   --text-body-sm--line-height: 22px;
+
+  --text-body-xs: 12px;
+  --text-body-xs--line-height: 18px;
 }
 
 @layer base {
