@@ -2,6 +2,9 @@
 import Vinyl from '../assets/Vinyl.svg';
 ---
 
+{/* Spotify's iFrame API loader pulls its script from here; connecting early shortens the player's setup. */}
+<link rel="preconnect" href="https://embed-cdn.spotifycdn.com" />
+
 {/* Filled in from /spotify.json, which .github/workflows/update-spotify.yml keeps current. */}
 <div
   data-recently-played
@@ -70,17 +73,27 @@ import Vinyl from '../assets/Vinyl.svg';
   // Spotify's player has no volume control, so the audio itself can't fade.
   const WIND_DOWN_MS = 2000;
 
+  // How long a tap's play or pause is shown before the player has confirmed it.
+  // If the player hasn't caught up by then, the vinyl goes back to what it reports.
+  const CONFIRM_TIMEOUT_MS = 5000;
+
+  // Starts loading Spotify's iFrame API straight away, alongside /spotify.json, rather than after it.
+  const iframeApi = new Promise<IFrameAPI>((resolve, reject) => {
+    (window as Window & { onSpotifyIframeApiReady?: (api: IFrameAPI) => void }).onSpotifyIframeApiReady = resolve;
+    const script = document.createElement('script');
+    script.src = 'https://open.spotify.com/embed/iframe-api/v1';
+    script.async = true;
+    script.onerror = reject;
+    document.head.append(script);
+  });
+  // Handled in loadPlayer; this only stops an unhandled rejection if /spotify.json never loads.
+  iframeApi.catch(() => {});
+
   // Resolves with the embed's controller once Spotify's player is ready to play.
-  const loadPlayer = (uri: string) =>
-    new Promise<EmbedController>((resolve, reject) => {
-      (window as Window & { onSpotifyIframeApiReady?: (api: IFrameAPI) => void }).onSpotifyIframeApiReady = (api) =>
-        api.createController(embed, { uri, width: 300, height: 80 }, resolve);
-      const script = document.createElement('script');
-      script.src = 'https://open.spotify.com/embed/iframe-api/v1';
-      script.async = true;
-      script.onerror = reject;
-      document.head.append(script);
-    });
+  const loadPlayer = async (uri: string) => {
+    const api = await iframeApi;
+    return new Promise<EmbedController>((resolve) => api.createController(embed, { uri, width: 300, height: 80 }, resolve));
+  };
 
   const load = async () => {
     const base = import.meta.env.BASE_URL.replace(/\/?$/, '/');
@@ -126,11 +139,37 @@ import Vinyl from '../assets/Vinyl.svg';
     };
     setPlaying(false);
 
+    // A tap is shown at once, before Spotify has fetched the audio, so there's no
+    // visible delay. Until the player confirms, updates that still report the old
+    // state are ignored; `reported` is what the player last said.
+    let expected: boolean | undefined;
+    let reported = false;
+    let confirmTimer = 0;
+
+    const request = (playing: boolean) => {
+      if (playing) {
+        // The position is frozen until the player reports again, and a finished track restarts.
+        const position = playback.position >= playback.duration ? 0 : playback.position;
+        playback = { ...playback, position, at: performance.now() };
+      }
+      expected = playing;
+      setPlaying(playing);
+      clearTimeout(confirmTimer);
+      confirmTimer = window.setTimeout(() => {
+        expected = undefined;
+        setPlaying(reported);
+      }, CONFIRM_TIMEOUT_MS);
+    };
+
     // Until the player is ready (or if it is blocked), the vinyl opens the song on Spotify instead.
     let controller: EmbedController | undefined;
     button.addEventListener('click', () => {
-      if (controller) controller.togglePlay();
-      else window.open(track.trackUrl, '_blank', 'noopener');
+      if (!controller) {
+        window.open(track.trackUrl, '_blank', 'noopener');
+        return;
+      }
+      controller.togglePlay();
+      request(!root.hasAttribute('data-playing'));
     });
 
     controller = await loadPlayer(`spotify:track:${trackId}`);
@@ -139,8 +178,13 @@ import Vinyl from '../assets/Vinyl.svg';
     // its position at the full duration without pausing, so that counts as stopped.
     controller.addListener('playback_update', ({ data }) => {
       playback = { position: data.position, duration: data.duration, at: performance.now() };
-      const playing = !data.isPaused && !(data.duration > 0 && data.position >= data.duration);
-      if (playing !== root.hasAttribute('data-playing')) setPlaying(playing);
+      reported = !data.isPaused && !(data.duration > 0 && data.position >= data.duration);
+      if (expected !== undefined) {
+        if (reported !== expected) return;
+        expected = undefined;
+        clearTimeout(confirmTimer);
+      }
+      if (reported !== root.hasAttribute('data-playing')) setPlaying(reported);
     });
   };
 
