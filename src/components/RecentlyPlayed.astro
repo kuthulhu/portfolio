@@ -1,14 +1,17 @@
 ---
 import Vinyl from '../assets/Vinyl.svg';
+import VinylDark from '../assets/Vinyl-dark.svg';
 ---
 
 {/* Spotify's iFrame API loader pulls its script from here; connecting early shortens the player's setup. */}
 <link rel="preconnect" href="https://embed-cdn.spotifycdn.com" />
 
-{/* Filled in from /spotify.json, which .github/workflows/update-spotify.yml keeps current. */}
+{/* Filled in from /spotify.json, which .github/workflows/update-spotify.yml keeps current.
+    100vw - 100% is the scrollbar's width, so the record keeps its place on the page
+    instead of moving in when a long tab brings in a scrollbar. */}
 <div
   data-recently-played
-  class="fixed right-[max(16px,env(safe-area-inset-right))] bottom-[max(16px,env(safe-area-inset-bottom))]"
+  class="fixed right-[calc(max(16px,env(safe-area-inset-right))-(100vw-100%))] bottom-[max(16px,env(safe-area-inset-bottom))]"
 >
   {/* Positioned off the vinyl so showing it never moves the vinyl. A body-sm and a
       body-xs line plus py-px and the border come to 44px, within the vinyl's 48px.
@@ -29,7 +32,11 @@ import Vinyl from '../assets/Vinyl.svg';
     aria-label="Recently played"
     class="block cursor-pointer rounded-full text-fg disabled:cursor-default"
   >
-    <Vinyl width={48} height={48} aria-hidden="true" class="vinyl" />
+    {/* Both themes' records spin inside one wrapper, so the script drives a single animation. */}
+    <span aria-hidden="true" class="vinyl block size-12">
+      <Vinyl width={48} height={48} class="block dark:hidden" />
+      <VinylDark width={48} height={48} fill="currentColor" class="hidden dark:block" />
+    </span>
   </button>
   {/* Spotify's embedded player, replaced by its iframe once the iFrame API loads.
       Kept invisible but on screen (1px, transparent) rather than display: none,
@@ -67,7 +74,7 @@ import Vinyl from '../assets/Vinyl.svg';
   const label = root.querySelector<HTMLElement>('[data-track]')!;
   const button = root.querySelector<HTMLButtonElement>('[data-vinyl-button]')!;
   const embed = root.querySelector<HTMLElement>('[data-spotify-embed]')!;
-  const vinyl = button.querySelector<SVGElement>('.vinyl')!;
+  const vinyl = button.querySelector<HTMLElement>('.vinyl')!;
 
   // How long before the end the label fades out and the vinyl slows to rest.
   // Spotify's player has no volume control, so the audio itself can't fade.

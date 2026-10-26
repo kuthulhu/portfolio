@@ -24,13 +24,14 @@ npm run preview  # preview the production build
 
 ## Editing content
 
-Almost everything lives in [`src/data/site.ts`](src/data/site.ts):
+Almost everything lives in [`src/data`](src/data):
 
-- **Name, role and portfolio link:** the `site` object
-- **Work history:** the `work` list. Write years in quotes, e.g. `'2024 – 2026'`
-- **Tabs:** the `tabs` list. To add a tab, add an entry there and create a matching page in `src/pages/` (e.g. `/explorations` → `src/pages/explorations.astro`)
+- **Name, role and portfolio link:** the `site` object in [`site.ts`](src/data/site.ts)
+- **Tabs:** the `tabs` list in [`site.ts`](src/data/site.ts). To add a tab, add an entry there, create its panel in `src/components/panels` and register it under the same id in `src/pages/index.astro`
+- **Selected work:** the `work` list in [`work.ts`](src/data/work.ts), grouped by role. Write years in quotes, e.g. `'2024 – 2026'`
+- **Software and hardware:** the `software` and `hardware` lists in [`tools.ts`](src/data/tools.ts)
 
-The About text is in [`src/pages/about.astro`](src/pages/about.astro).
+The About text is in [`src/components/panels/About.astro`](src/components/panels/About.astro).
 
 ## Design tokens
 

@@ -87,6 +87,15 @@
 }
 
 @layer base {
+  /* Lays the page out on the full window width, scrollbar included, so the
+     centred column doesn't shift when a long tab brings in a scrollbar. The
+     scrollbar then covers the page's right edge, which is clipped rather than
+     scrolling sideways. */
+  html {
+    width: 100vw;
+    overflow-x: clip;
+  }
+
   body {
     background: var(--bg);
     color: var(--fg);
@@ -129,12 +138,25 @@
     }
   }
 
-  /* Work thumbnail: eases in when its row is hovered or focused, and
-     disappears instantly on leave (the transition lives on the shown state only). */
+  /* Work thumbnail: sits centred 16px above the cursor. Uses transform so it
+     doesn't clash with the translate the fade-in animates. It eases in when its
+     row is hovered or focused, and disappears instantly on leave (the transition
+     lives on the shown state only). */
   .work-preview {
+    transform: translate(calc(var(--preview-x, 0px) - 50%), calc(var(--preview-y, 0px) - 100% - 16px))
+      rotate(var(--preview-tilt, 0deg));
+    /* Tilts from its bottom edge, the end nearest the cursor. */
+    transform-origin: 50% 100%;
     opacity: 0;
     translate: 0 4px;
     scale: 0.98;
+  }
+
+  /* Once the cursor is in the list, every thumbnail is already full size, so
+     the rise only plays on entering and moving between rows just fades in. */
+  [data-work]:hover .work-preview {
+    translate: 0 0;
+    scale: 1;
   }
 
   .work-item:hover .work-preview,
@@ -144,7 +166,9 @@
     scale: 1;
     transition-property: opacity, translate, scale;
     transition-duration: 300ms;
-    transition-timing-function: var(--ease-gentle);
+    /* Opacity fades in linearly: an ease-out curve front-loads it, so the
+       image looks like it pops in even though the rise is gentle. */
+    transition-timing-function: linear, var(--ease-gentle), var(--ease-gentle);
   }
 
   /* Active-tab underline. Its position is set from Tabs.astro; it only glides

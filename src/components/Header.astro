@@ -1,11 +1,14 @@
 ---
 import Avatar from '../assets/ax.svg';
+import AvatarDark from '../assets/ax-dark.svg';
 import ExternalLink from './ExternalLink.astro';
 import { site } from '../data/site';
 ---
 
 <header>
-  <Avatar width={64} height={64} fill="currentColor" aria-hidden="true" class="text-fg" />
+  {/* The light avatar doesn't recolor well, so dark mode swaps in its own drawing. */}
+  <Avatar width={64} height={64} fill="currentColor" aria-hidden="true" class="text-fg dark:hidden" />
+  <AvatarDark width={64} height={64} fill="currentColor" aria-hidden="true" class="hidden text-fg dark:inline" />
 
   <h1 class="mt-10 text-h1">{site.name}</h1>
   <p>

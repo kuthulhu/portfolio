@@ -1,7 +1,7 @@
 ---
 import type { ImageMetadata } from 'astro';
 import { Image } from 'astro:assets';
-import { work } from '../../data/site';
+import { work } from '../../data/work';
 
 const images = import.meta.glob<{ default: ImageMetadata }>(
   '../../assets/works/*.{jpg,jpeg,png,webp,avif}',
@@ -15,50 +15,124 @@ const getImage = (name: string) => {
 };
 ---
 
-{/* Previews are positioned out of the list's flow, so hovering never shifts it. */}
-<ul class="relative flex flex-col gap-5">
+{/* Previews are positioned against this wrapper, out of the list's flow, so hovering never shifts it.
+    The script below moves them with the cursor through --preview-x and --preview-y. */}
+<div data-work class="relative flex flex-col gap-10">
   {
-    work.map((item) => (
-      <li class="work-item group">
-        {/* The link's ::after stretches over this wrapper, so the whole row is clickable. */}
-        <div class="relative">
-          <h2 class="text-h4 transition-colors duration-150 ease-out group-focus-within:text-accent group-hover:text-accent motion-reduce:transition-none">
-            {item.href ? (
-              <a href={item.href} class="link after:absolute after:inset-0">{item.title}</a>
-            ) : (
-              <span class="underline decoration-transparent decoration-2 underline-offset-5 transition-colors duration-150 ease-out group-hover:decoration-line motion-reduce:transition-none">
-                {item.title}
-              </span>
-            )}
-            {item.company && <>{' '}<span class="text-muted">at {item.company}</span></>}
-          </h2>
-          <p class="text-body-sm text-muted mt-1 tabular-nums">
-            {item.year}
-            {item.type && <> ({item.type})</>}
-          </p>
-        </div>
-        <figure
-          aria-hidden="true"
-          class="work-preview pointer-events-none absolute top-0 right-0 hidden w-[320px] md:block"
-        >
-          {/* An inset ring on an <img> is painted under the picture, so the border sits on ::after. */}
-          <div class="shadow-thumb after:ring-thumb-border relative rounded-lg after:absolute after:inset-0 after:rounded-lg after:ring-1 after:ring-inset">
-            {item.image ? (
-              <Image
-                src={getImage(item.image)}
-                alt=""
-                width={640}
-                class="aspect-video w-full rounded-lg object-cover"
-              />
-            ) : (
-              <div class="bg-line aspect-video w-full rounded-lg" />
-            )}
-          </div>
-          {item.description && (
-            <figcaption class="text-body-sm text-muted mt-3">{item.description}</figcaption>
-          )}
-        </figure>
-      </li>
+    work.map((role) => (
+      <section class="flex flex-col gap-3">
+        <h2 class="text-body-sm text-muted">
+          {role.title}
+          {role.company && <> at {role.company}</>}
+          {role.type && <> ({role.type})</>}
+        </h2>
+        {/* Rows are spaced mostly with padding, so the cursor rarely falls between them and drops the preview. */}
+        <ul class="-my-1 flex flex-col items-start gap-2">
+          {role.projects.map((project) => (
+            <li class="work-item group py-1">
+              {/* The link's ::after stretches over this wrapper and the row's padding, so the whole row is clickable. */}
+              <div class="relative">
+                <h3 class="text-h4 transition-colors duration-150 ease-out group-focus-within:text-accent group-hover:text-accent motion-reduce:transition-none">
+                  {project.href ? (
+                    <a
+                      href={project.href}
+                      target="_blank"
+                      rel="noopener"
+                      class="link after:absolute after:inset-x-0 after:-inset-y-1"
+                    >
+                      {project.title}
+                      <span class="sr-only"> (opens in a new tab)</span>
+                    </a>
+                  ) : (
+                    <span class="underline decoration-transparent decoration-2 underline-offset-5 transition-colors duration-150 ease-out group-hover:decoration-line motion-reduce:transition-none">
+                      {project.title}
+                    </span>
+                  )}
+                </h3>
+                <p class="text-body-sm text-muted mt-1 tabular-nums">{project.year}</p>
+              </div>
+              <figure
+                aria-hidden="true"
+                class="work-preview pointer-events-none absolute top-0 left-0 z-10 hidden w-[320px] md:block"
+              >
+                {/* An inset ring on an <img> is painted under the picture, so the border sits on ::after. */}
+                <div class="shadow-thumb after:ring-thumb-border relative rounded-lg after:absolute after:inset-0 after:rounded-lg after:ring-1 after:ring-inset">
+                  {project.image ? (
+                    <Image
+                      src={getImage(project.image)}
+                      alt=""
+                      width={640}
+                      class="aspect-4/3 w-full rounded-lg object-cover"
+                    />
+                  ) : (
+                    <div class="bg-line aspect-4/3 w-full rounded-lg" />
+                  )}
+                </div>
+              </figure>
+            </li>
+          ))}
+        </ul>
+      </section>
     ))
   }
-</ul>
+</div>
+
+<script>
+  const list = document.querySelector<HTMLElement>('[data-work]')!;
+  const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)');
+
+  // The cover tilts against the cursor's horizontal speed, as if it hangs from
+  // the cursor and its top lags behind, then eases upright once the mouse stops.
+  const MAX_TILT = 6;
+  let x = 0;
+  let y = 0;
+  let lastX: number | undefined;
+  let tilt = 0;
+  let targetTilt = 0;
+  let frame = 0;
+
+  const render = () => {
+    list.style.setProperty('--preview-x', `${x}px`);
+    list.style.setProperty('--preview-y', `${y}px`);
+    list.style.setProperty('--preview-tilt', `${tilt}deg`);
+    targetTilt *= 0.92;
+    tilt += (targetTilt - tilt) * 0.08;
+    if (Math.abs(tilt) < 0.01 && Math.abs(targetTilt) < 0.01) {
+      tilt = targetTilt = 0;
+      list.style.setProperty('--preview-tilt', '0deg');
+      frame = 0;
+    } else {
+      frame = requestAnimationFrame(render);
+    }
+  };
+
+  const moveTo = (nextX: number, nextY: number) => {
+    x = nextX;
+    y = nextY;
+    if (!frame) frame = requestAnimationFrame(render);
+  };
+
+  list.addEventListener('pointerleave', () => {
+    lastX = undefined;
+  });
+
+  list.addEventListener('pointermove', (event) => {
+    if (event.pointerType !== 'mouse') return;
+    if (lastX !== undefined && !reduceMotion.matches) {
+      const speed = event.clientX - lastX;
+      targetTilt = Math.max(-MAX_TILT, Math.min(MAX_TILT, -speed * 0.6));
+    }
+    lastX = event.clientX;
+    const rect = list.getBoundingClientRect();
+    moveTo(event.clientX - rect.left, event.clientY - rect.top);
+  });
+
+  // Keyboard focus has no cursor, so the preview sits above the right end of the focused row instead.
+  list.addEventListener('focusin', (event) => {
+    const row = (event.target as Element).closest<HTMLElement>('.work-item');
+    if (!row || row.matches(':hover')) return;
+    const rect = list.getBoundingClientRect();
+    const rowRect = row.getBoundingClientRect();
+    moveTo(rect.width - 160, rowRect.top - rect.top);
+  });
+</script>
