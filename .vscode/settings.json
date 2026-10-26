@@ -1,0 +1,4 @@
+{
+  // Tailwind's @theme and @apply aren't known to VS Code's built-in CSS linter.
+  "css.lint.unknownAtRules": "ignore"
+}
