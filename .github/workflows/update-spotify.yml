@@ -4,9 +4,9 @@ name: Update recently played
 
 on:
   # GitHub delays or drops scheduled runs under load, worst at :00 and :30,
-  # so this runs often and off those minutes.
+  # so this runs off those minutes.
   schedule:
-    - cron: "7,32,57 * * * *"
+    - cron: "7 * * * *"
   workflow_dispatch:
 
 permissions:
