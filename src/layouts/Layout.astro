@@ -87,9 +87,11 @@ const ogImage = Astro.site && site.ogImage && new URL(site.ogImage, Astro.site);
 		)}
 	</head>
 	<body class="relative">
-		{/* The body is positioned so the backdrop is placed against the full-width page, not the area beside the scrollbar. */}
+		{/* The body is positioned so the backdrop is placed against the full-width page, not the area beside the scrollbar.
+		    It's only a soft blur, so a third of its size scales back up without a visible difference, at about a seventh of the bytes. */}
 		<Image
 			src={backdrop}
+			width={135}
 			alt=""
 			loading="eager"
 			fetchpriority="high"
