@@ -81,8 +81,20 @@ const ogImage = Astro.site && site.ogImage && new URL(site.ogImage, Astro.site);
 					} catch {}
 					gtag('js', new Date());
 					gtag('config', 'G-F1X8YCCX9G');
+					// gtag.js is about 170 KB, so it waits until the page has loaded rather than
+					// sharing bandwidth with the fonts and images. The calls above are queued in
+					// dataLayer and sent once it arrives.
+					addEventListener(
+						'load',
+						() => {
+							const script = document.createElement('script');
+							script.src = 'https://www.googletagmanager.com/gtag/js?id=G-F1X8YCCX9G';
+							script.async = true;
+							document.head.append(script);
+						},
+						{ once: true },
+					);
 				</script>
-				<script is:inline async src="https://www.googletagmanager.com/gtag/js?id=G-F1X8YCCX9G"></script>
 			</>
 		)}
 	</head>
