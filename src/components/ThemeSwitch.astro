@@ -1,0 +1,73 @@
+---
+import LampOn from '../assets/lamp-on.svg';
+import LampOff from '../assets/lamp-off.svg';
+
+interface Props {
+  class?: string;
+}
+
+const { class: className } = Astro.props;
+---
+
+{/* Flips between light and dark without touching the system setting: the lamp is lit
+    in light mode and off in dark mode. The drawings follow the dark: variant rather
+    than aria-checked, so the right one shows on first paint. */}
+<button
+  type="button"
+  role="switch"
+  aria-checked="false"
+  aria-label="Dark mode"
+  data-theme-switch
+  class:list={['block size-12 shrink-0 cursor-pointer rounded-full text-fg', className]}
+>
+  <LampOn width={48} height={48} fill="currentColor" aria-hidden="true" class="block dark:hidden" />
+  <LampOff width={48} height={48} fill="currentColor" aria-hidden="true" class="hidden dark:block" />
+</button>
+
+<script>
+  import switchOnUrl from '../assets/switch-on.mp3';
+  import switchOffUrl from '../assets/switch-off.mp3';
+
+  type Theme = 'light' | 'dark';
+  // Read before first paint by the inline script in Layout.astro.
+  const STORAGE_KEY = 'theme';
+
+  const root = document.documentElement;
+  const systemDark = matchMedia('(prefers-color-scheme: dark)');
+  const current = (): Theme => (root.dataset.theme as Theme) ?? (systemDark.matches ? 'dark' : 'light');
+
+  // The lamp's click: switch-on.mp3 and switch-off.mp3 are the two halves of
+  // switch-on-off.mp3. Loaded up front (they're a few KB) so the first click isn't late.
+  const sounds = { on: new Audio(switchOnUrl), off: new Audio(switchOffUrl) };
+  const playClick = (on: boolean) => {
+    const sound = on ? sounds.on : sounds.off;
+    sound.currentTime = 0;
+    sound.play().catch(() => {});
+  };
+
+  const sync = () => {
+    document.querySelectorAll('[data-theme-switch]').forEach((button) => {
+      button.setAttribute('aria-checked', String(current() === 'dark'));
+    });
+  };
+
+  document.querySelectorAll('[data-theme-switch]').forEach((button) => {
+    button.addEventListener('click', () => {
+      const theme: Theme = current() === 'dark' ? 'light' : 'dark';
+      root.dataset.theme = theme;
+      playClick(theme === 'light');
+      try {
+        localStorage.setItem(STORAGE_KEY, theme);
+      } catch {}
+      // The browser chrome follows the picked theme too, not the system one.
+      document.querySelectorAll<HTMLMetaElement>('meta[name="theme-color"]').forEach((meta) => {
+        meta.media = meta.dataset.scheme === theme ? 'all' : 'not all';
+      });
+      sync();
+    });
+  });
+
+  // With no saved pick the page follows the system, so the switch does too.
+  systemDark.addEventListener('change', sync);
+  sync();
+</script>

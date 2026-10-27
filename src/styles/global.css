@@ -1,5 +1,18 @@
 @import "tailwindcss";
 
+/* Dark when picked with ThemeSwitch (data-theme on <html>), or when the system is
+   dark and nothing was picked. Used both by dark: classes and the tokens below. */
+@custom-variant dark {
+  &:where([data-theme="dark"], [data-theme="dark"] *) {
+    @slot;
+  }
+  @media (prefers-color-scheme: dark) {
+    &:where(:root:not([data-theme]), :root:not([data-theme]) *) {
+      @slot;
+    }
+  }
+}
+
 :root {
   --bg: #fafafa;
   --fg: #0a0a0a;
@@ -19,11 +32,10 @@
     0 4px 8px -2px rgb(0 0 0 / 0.05),
     0 12px 24px -6px rgb(0 0 0 / 0.08),
     0 24px 48px -12px rgb(0 0 0 / 0.1);
-  color-scheme: light dark;
-}
+  color-scheme: light;
 
-@media (prefers-color-scheme: dark) {
-  :root {
+  @variant dark {
+    color-scheme: dark;
     --bg: #0e0e0f;
     --fg: #ededee;
     --muted: #77777d;

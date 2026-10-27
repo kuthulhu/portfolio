@@ -3,6 +3,7 @@ import { Font, Image } from 'astro:assets';
 import backdrop from '../assets/back1.png';
 import CookieBanner from '../components/CookieBanner.astro';
 import RecentlyPlayed from '../components/RecentlyPlayed.astro';
+import ThemeSwitch from '../components/ThemeSwitch.astro';
 import { site } from '../data/site';
 import '../styles/global.css';
 
@@ -34,8 +35,21 @@ const ogImage = Astro.site && site.ogImage && new URL(site.ogImage, Astro.site);
 		{ogImage && <meta property="og:image:width" content="1200" />}
 		{ogImage && <meta property="og:image:height" content="630" />}
 		<meta name="twitter:card" content={ogImage ? 'summary_large_image' : 'summary'} />
-		<meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)" />
-		<meta name="theme-color" content="#0e0e0f" media="(prefers-color-scheme: dark)" />
+		<meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)" data-scheme="light" />
+		<meta name="theme-color" content="#0e0e0f" media="(prefers-color-scheme: dark)" data-scheme="dark" />
+		{/* Applies a theme picked with ThemeSwitch before first paint, so the page doesn't
+		    flash the system theme first. With no pick, the page follows the system. */}
+		<script is:inline>
+			try {
+				const theme = localStorage.getItem('theme');
+				if (theme === 'light' || theme === 'dark') {
+					document.documentElement.dataset.theme = theme;
+					document.querySelectorAll('meta[name="theme-color"]').forEach((meta) => {
+						meta.media = meta.dataset.scheme === theme ? 'all' : 'not all';
+					});
+				}
+			} catch {}
+		</script>
 		<link rel="icon" href="/favicon.ico" sizes="32x32" />
 		<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
 		<link rel="apple-touch-icon" href="/apple-touch-icon.png" />
@@ -81,6 +95,9 @@ const ogImage = Astro.site && site.ogImage && new URL(site.ogImage, Astro.site);
 			fetchpriority="high"
 			class="pointer-events-none absolute top-0 right-0 w-[260px] select-none sm:w-[404px] dark:opacity-40"
 		/>
+		{/* In the page's top-right corner, over the backdrop. A classic scrollbar (about 15px)
+		    covers the page's right edge, so the inset keeps the switch clear of it. */}
+		<ThemeSwitch class="absolute top-[max(16px,env(safe-area-inset-top))] right-[max(16px,env(safe-area-inset-right))] z-10 sm:top-6 sm:right-6" />
 		<div class="relative mx-auto max-w-[800px] pt-16 pr-[max(1.5rem,env(safe-area-inset-right))] pb-24 pl-[max(1.5rem,env(safe-area-inset-left))] sm:px-10 sm:pt-[72px]">
 			<slot />
 		</div>
