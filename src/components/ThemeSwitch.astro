@@ -25,8 +25,8 @@ const { class: className } = Astro.props;
 </button>
 
 <script>
-  import switchOnUrl from '../assets/switch-on.mp3';
-  import switchOffUrl from '../assets/switch-off.mp3';
+  import switchOnUrl from '../assets/switch-on.wav';
+  import switchOffUrl from '../assets/switch-off.wav';
 
   type Theme = 'light' | 'dark';
   // Read before first paint by the inline script in Layout.astro.
@@ -36,13 +36,27 @@ const { class: className } = Astro.props;
   const systemDark = matchMedia('(prefers-color-scheme: dark)');
   const current = (): Theme => (root.dataset.theme as Theme) ?? (systemDark.matches ? 'dark' : 'light');
 
-  // The lamp's click: switch-on.mp3 and switch-off.mp3 are the two halves of
-  // switch-on-off.mp3. Loaded up front (they're a few KB) so the first click isn't late.
-  const sounds = { on: new Audio(switchOnUrl), off: new Audio(switchOffUrl) };
+  // The lamp's click, cut from one recording into its on and off halves. Each clip
+  // starts right at the snap, and they're decoded up front and played through Web
+  // Audio, which starts sound sooner than an <audio> element does.
+  const audio = new AudioContext();
+  const sounds: Partial<Record<'on' | 'off', AudioBuffer>> = {};
+  const load = async (name: 'on' | 'off', url: string) => {
+    try {
+      const response = await fetch(url);
+      sounds[name] = await audio.decodeAudioData(await response.arrayBuffer());
+    } catch {}
+  };
+  load('on', switchOnUrl);
+  load('off', switchOffUrl);
+
   const playClick = (on: boolean) => {
-    const sound = on ? sounds.on : sounds.off;
-    sound.currentTime = 0;
-    sound.play().catch(() => {});
+    const buffer = sounds[on ? 'on' : 'off'];
+    if (!buffer) return;
+    const source = audio.createBufferSource();
+    source.buffer = buffer;
+    source.connect(audio.destination);
+    source.start();
   };
 
   const sync = () => {
@@ -52,7 +66,11 @@ const { class: className } = Astro.props;
   };
 
   document.querySelectorAll('[data-theme-switch]').forEach((button) => {
+    // Browsers keep audio suspended until the visitor interacts. Waking it on press
+    // means it's already running by the time the click lands.
+    button.addEventListener('pointerdown', () => audio.resume());
     button.addEventListener('click', () => {
+      audio.resume();
       const theme: Theme = current() === 'dark' ? 'light' : 'dark';
       root.dataset.theme = theme;
       playClick(theme === 'light');
