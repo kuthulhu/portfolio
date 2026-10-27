@@ -1,6 +1,7 @@
 // @ts-check
 import { defineConfig, fontProviders } from 'astro/config';
 import tailwindcss from '@tailwindcss/vite';
+import sitemap from '@astrojs/sitemap';
 // https://astro.build/config
 export default defineConfig({
   // Your live domain. Needed for full URLs in link previews (og:url, og:image).
@@ -27,6 +28,7 @@ export default defineConfig({
       fallbacks: ['sans-serif'],
     },
   ],
+  integrations: [sitemap()],
   vite: {
     plugins: [tailwindcss()]
   }
