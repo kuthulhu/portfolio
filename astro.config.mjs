@@ -5,13 +5,16 @@ import tailwindcss from '@tailwindcss/vite';
 export default defineConfig({
   // Your live domain. Needed for full URLs in link previews (og:url, og:image).
   // site: 'https://your-domain.com',
+  // Only upright Latin is used on the page (its one accent, ü, is in the latin
+  // subset), so italics and latin-ext would only add downloads.
   fonts: [
     {
       provider: fontProviders.google(),
       name: 'Inter',
       cssVariable: '--font-inter',
       weights: ['400', '500'],
-      subsets: ['latin', 'latin-ext'],
+      styles: ['normal'],
+      subsets: ['latin'],
       fallbacks: ['sans-serif'],
     },
     {
@@ -19,7 +22,8 @@ export default defineConfig({
       name: 'Inter Tight',
       cssVariable: '--font-inter-tight',
       weights: ['400', '500'],
-      subsets: ['latin', 'latin-ext'],
+      styles: ['normal'],
+      subsets: ['latin'],
       fallbacks: ['sans-serif'],
     },
   ],

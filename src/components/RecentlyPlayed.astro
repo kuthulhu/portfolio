@@ -84,15 +84,27 @@ import VinylDark from '../assets/Vinyl-dark.svg';
   // If the player hasn't caught up by then, the vinyl goes back to what it reports.
   const CONFIRM_TIMEOUT_MS = 5000;
 
-  // Starts loading Spotify's iFrame API straight away, alongside /spotify.json, rather than after it.
-  const iframeApi = new Promise<IFrameAPI>((resolve, reject) => {
-    (window as Window & { onSpotifyIframeApiReady?: (api: IFrameAPI) => void }).onSpotifyIframeApiReady = resolve;
-    const script = document.createElement('script');
-    script.src = 'https://open.spotify.com/embed/iframe-api/v1';
-    script.async = true;
-    script.onerror = reject;
-    document.head.append(script);
+  // The player pulls in close to 1 MB of Spotify's scripts, so it waits until the page
+  // has loaded and the browser is idle, keeping it out of the way of the first paint.
+  // It still starts independently of /spotify.json rather than after it.
+  const afterLoad = new Promise<void>((resolve) => {
+    // Safari has no requestIdleCallback, so it gets a short timeout instead.
+    const idle = () =>
+      'requestIdleCallback' in window ? requestIdleCallback(() => resolve(), { timeout: 2000 }) : setTimeout(resolve, 200);
+    if (document.readyState === 'complete') idle();
+    else addEventListener('load', idle, { once: true });
   });
+  const iframeApi = afterLoad.then(
+    () =>
+      new Promise<IFrameAPI>((resolve, reject) => {
+        (window as Window & { onSpotifyIframeApiReady?: (api: IFrameAPI) => void }).onSpotifyIframeApiReady = resolve;
+        const script = document.createElement('script');
+        script.src = 'https://open.spotify.com/embed/iframe-api/v1';
+        script.async = true;
+        script.onerror = reject;
+        document.head.append(script);
+      }),
+  );
   // Handled in loadPlayer; this only stops an unhandled rejection if /spotify.json never loads.
   iframeApi.catch(() => {});
 

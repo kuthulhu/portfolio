@@ -49,6 +49,7 @@ const ogImage = Astro.site && site.ogImage && new URL(site.ogImage, Astro.site);
 			src={backdrop}
 			alt=""
 			loading="eager"
+			fetchpriority="high"
 			class="pointer-events-none absolute top-0 right-0 w-[260px] select-none sm:w-[404px] dark:opacity-40"
 		/>
 		<div class="relative mx-auto max-w-[800px] pt-16 pr-[max(1.5rem,env(safe-area-inset-right))] pb-24 pl-[max(1.5rem,env(safe-area-inset-left))] sm:px-10 sm:pt-[72px]">
