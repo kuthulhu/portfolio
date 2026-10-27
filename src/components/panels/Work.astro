@@ -56,16 +56,16 @@ const getImage = (name: string) => {
                 class="work-preview pointer-events-none absolute top-0 left-0 z-10 hidden w-[320px] md:block"
               >
                 {/* An inset ring on an <img> is painted under the picture, so the border sits on ::after. */}
-                <div class="shadow-thumb after:ring-thumb-border relative rounded-lg after:absolute after:inset-0 after:rounded-lg after:ring-1 after:ring-inset">
+                <div class="shadow-thumb after:ring-thumb-border relative rounded-xl after:absolute after:inset-0 after:rounded-xl after:ring-1 after:ring-inset">
                   {project.image ? (
                     <Image
                       src={getImage(project.image)}
                       alt=""
                       width={640}
-                      class="aspect-4/3 w-full rounded-lg object-cover"
+                      class="aspect-4/3 w-full rounded-xl object-cover"
                     />
                   ) : (
-                    <div class="bg-line aspect-4/3 w-full rounded-lg" />
+                    <div class="bg-line aspect-4/3 w-full rounded-xl" />
                   )}
                 </div>
               </figure>

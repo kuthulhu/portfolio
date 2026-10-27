@@ -43,8 +43,8 @@ const ogImage = Astro.site && site.ogImage && new URL(site.ogImage, Astro.site);
 		<Font cssVariable="--font-inter" preload={[{ weight: '400' }]} />
 		<Font cssVariable="--font-inter-tight" preload={[{ weight: '400' }]} />
 	</head>
-	{/* Positioned so the backdrop is placed against the full-width page, not the area beside the scrollbar. */}
 	<body class="relative">
+		{/* The body is positioned so the backdrop is placed against the full-width page, not the area beside the scrollbar. */}
 		<Image
 			src={backdrop}
 			alt=""
