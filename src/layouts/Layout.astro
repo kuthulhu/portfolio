@@ -42,6 +42,20 @@ const ogImage = Astro.site && site.ogImage && new URL(site.ogImage, Astro.site);
 		<title>{pageTitle}</title>
 		<Font cssVariable="--font-inter" preload={[{ weight: '400' }]} />
 		<Font cssVariable="--font-inter-tight" preload={[{ weight: '400' }]} />
+		{/* Analytics only load in production builds so local dev visits aren't counted. */}
+		{import.meta.env.PROD && (
+			<>
+				<script is:inline async src="https://www.googletagmanager.com/gtag/js?id=G-F1X8YCCX9G"></script>
+				<script is:inline>
+					window.dataLayer = window.dataLayer || [];
+					function gtag() {
+						dataLayer.push(arguments);
+					}
+					gtag('js', new Date());
+					gtag('config', 'G-F1X8YCCX9G');
+				</script>
+			</>
+		)}
 	</head>
 	<body class="relative">
 		{/* The body is positioned so the backdrop is placed against the full-width page, not the area beside the scrollbar. */}
