@@ -1,6 +1,8 @@
 ---
-import LampOn from '../assets/lamp-on.svg';
-import LampOff from '../assets/lamp-off.svg';
+// Loaded as files rather than inlined: drawn into the page, their paths held up
+// first paint. Only the lamp for the current theme is downloaded.
+import lampOnUrl from '../assets/lamp-on.svg?no-inline';
+import lampOffUrl from '../assets/lamp-off.svg?no-inline';
 
 interface Props {
   class?: string;
@@ -20,8 +22,8 @@ const { class: className } = Astro.props;
   data-theme-switch
   class:list={['block size-12 shrink-0 cursor-pointer rounded-full text-fg', className]}
 >
-  <LampOn width={48} height={48} fill="currentColor" aria-hidden="true" class="block dark:hidden" />
-  <LampOff width={48} height={48} fill="currentColor" aria-hidden="true" class="hidden dark:block" />
+  <span aria-hidden="true" class="lamp block size-12 dark:hidden" style={`--lamp: url(${lampOnUrl})`}></span>
+  <span aria-hidden="true" class="lamp hidden size-12 dark:block" style={`--lamp: url(${lampOffUrl})`}></span>
 </button>
 
 <script>
@@ -37,26 +39,69 @@ const { class: className } = Astro.props;
   const current = (): Theme => (root.dataset.theme as Theme) ?? (systemDark.matches ? 'dark' : 'light');
 
   // The lamp's click, cut from one recording into its on and off halves. Each clip
-  // starts right at the snap, and they're decoded up front and played through Web
-  // Audio, which starts sound sooner than an <audio> element does.
-  const audio = new AudioContext();
-  const sounds: Partial<Record<'on' | 'off', AudioBuffer>> = {};
-  const load = async (name: 'on' | 'off', url: string) => {
-    try {
-      const response = await fetch(url);
-      sounds[name] = await audio.decodeAudioData(await response.arrayBuffer());
-    } catch {}
-  };
-  load('on', switchOnUrl);
-  load('off', switchOffUrl);
+  // starts right at the snap and plays through Web Audio, which starts sound sooner
+  // than an <audio> element does. The clips are downloaded once the page has loaded
+  // and gone idle; making the audio context at load blocked the main thread.
+  //
+  // Safari only plays sound started inside the click itself, so nothing on the way
+  // from click to sound may wait. That rules out decodeAudioData, which is
+  // asynchronous: the clips are mono 16-bit WAV, read into samples here as soon as
+  // they arrive, and the click copies them into a buffer and starts it right away.
+  type Clip = 'on' | 'off';
+  const clipUrls: Record<Clip, string> = { on: switchOnUrl, off: switchOffUrl };
+  const samples: Partial<Record<Clip, { rate: number; data: Float32Array<ArrayBuffer> }>> = {};
 
-  const playClick = (on: boolean) => {
-    const buffer = sounds[on ? 'on' : 'off'];
-    if (!buffer) return;
-    const source = audio.createBufferSource();
-    source.buffer = buffer;
-    source.connect(audio.destination);
-    source.start();
+  // Walks the WAV's chunks for the sample rate (in "fmt ") and the samples ("data").
+  const readWav = (bytes: ArrayBuffer) => {
+    const view = new DataView(bytes);
+    let rate = 44100;
+    for (let offset = 12; offset + 8 <= view.byteLength; ) {
+      const id = String.fromCharCode(...new Uint8Array(bytes, offset, 4));
+      const size = view.getUint32(offset + 4, true);
+      if (id === 'fmt ') rate = view.getUint32(offset + 12, true);
+      if (id === 'data') {
+        const data = new Float32Array(Math.floor(Math.min(size, view.byteLength - offset - 8) / 2));
+        for (let i = 0; i < data.length; i++) data[i] = view.getInt16(offset + 8 + i * 2, true) / 32768;
+        return { rate, data };
+      }
+      offset += 8 + size + (size % 2);
+    }
+  };
+
+  let downloading = false;
+  const download = () => {
+    if (downloading) return;
+    downloading = true;
+    for (const clip of ['on', 'off'] as const) {
+      fetch(clipUrls[clip])
+        .then((response) => response.arrayBuffer())
+        .then((bytes) => (samples[clip] = readWav(bytes)))
+        .catch(() => {});
+    }
+  };
+
+  const whenIdle = (callback: () => void) =>
+    'requestIdleCallback' in window ? requestIdleCallback(callback, { timeout: 4000 }) : setTimeout(callback, 2000);
+  if (document.readyState === 'complete') whenIdle(download);
+  else addEventListener('load', () => whenIdle(download), { once: true });
+
+  let context: AudioContext | undefined;
+  const buffers: Partial<Record<Clip, AudioBuffer>> = {};
+  const playClick = (clip: Clip) => {
+    const sound = samples[clip];
+    if (!sound) return;
+    try {
+      context ??= new AudioContext();
+      context.resume();
+      if (!buffers[clip]) {
+        buffers[clip] = context.createBuffer(1, sound.data.length, sound.rate);
+        buffers[clip].copyToChannel(sound.data, 0);
+      }
+      const source = context.createBufferSource();
+      source.buffer = buffers[clip];
+      source.connect(context.destination);
+      source.start();
+    } catch {}
   };
 
   const sync = () => {
@@ -66,14 +111,13 @@ const { class: className } = Astro.props;
   };
 
   document.querySelectorAll('[data-theme-switch]').forEach((button) => {
-    // Browsers keep audio suspended until the visitor interacts. Waking it on press
-    // means it's already running by the time the click lands.
-    button.addEventListener('pointerdown', () => audio.resume());
+    // Reaching the switch before the page went idle starts the download early.
+    button.addEventListener('pointerdown', download);
+    button.addEventListener('focus', download);
     button.addEventListener('click', () => {
-      audio.resume();
       const theme: Theme = current() === 'dark' ? 'light' : 'dark';
       root.dataset.theme = theme;
-      playClick(theme === 'light');
+      playClick(theme === 'light' ? 'on' : 'off');
       try {
         localStorage.setItem(STORAGE_KEY, theme);
       } catch {}

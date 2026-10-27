@@ -190,6 +190,13 @@
     translate: var(--tab-x, 0) 0;
   }
 
+  /* Theme switch lamp: the drawing (set as --lamp in ThemeSwitch.astro) masks a
+     block of the text colour, so it follows the theme like an inline SVG would. */
+  .lamp {
+    background-color: currentColor;
+    mask: var(--lamp) center / contain no-repeat;
+  }
+
   .tab-indicator[data-animate] {
     transition-property: translate, width;
     transition-duration: 240ms;
