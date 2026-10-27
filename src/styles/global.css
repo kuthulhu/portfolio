@@ -38,7 +38,7 @@
     color-scheme: dark;
     --bg: #0e0e0f;
     --fg: #ededee;
-    --muted: #77777d;
+    --muted: #808086;
     --line: #29292c;
     --accent: #ff5cd1; /* lighter tint of the light-mode #e300ae, reads better on dark */
     --thumb-border: rgb(255 255 255 / 0.08);
