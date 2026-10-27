@@ -1,6 +1,7 @@
 ---
 import { Font, Image } from 'astro:assets';
 import backdrop from '../assets/back1.png';
+import CookieBanner from '../components/CookieBanner.astro';
 import RecentlyPlayed from '../components/RecentlyPlayed.astro';
 import { site } from '../data/site';
 import '../styles/global.css';
@@ -42,18 +43,32 @@ const ogImage = Astro.site && site.ogImage && new URL(site.ogImage, Astro.site);
 		<title>{pageTitle}</title>
 		<Font cssVariable="--font-inter" preload={[{ weight: '400' }]} />
 		<Font cssVariable="--font-inter-tight" preload={[{ weight: '400' }]} />
-		{/* Analytics only load in production builds so local dev visits aren't counted. */}
+		{/* Analytics only load in production builds so local dev visits aren't counted.
+		    Consent Mode starts with all storage denied, so no cookies are set until the
+		    visitor accepts in CookieBanner. A choice saved on an earlier visit is applied
+		    here, before the config call, so returning visitors are counted from the first hit. */}
 		{import.meta.env.PROD && (
 			<>
-				<script is:inline async src="https://www.googletagmanager.com/gtag/js?id=G-F1X8YCCX9G"></script>
 				<script is:inline>
 					window.dataLayer = window.dataLayer || [];
 					function gtag() {
 						dataLayer.push(arguments);
 					}
+					gtag('consent', 'default', {
+						ad_storage: 'denied',
+						ad_user_data: 'denied',
+						ad_personalization: 'denied',
+						analytics_storage: 'denied',
+					});
+					try {
+						if (localStorage.getItem('analytics-consent') === 'granted') {
+							gtag('consent', 'update', { analytics_storage: 'granted' });
+						}
+					} catch {}
 					gtag('js', new Date());
 					gtag('config', 'G-F1X8YCCX9G');
 				</script>
+				<script is:inline async src="https://www.googletagmanager.com/gtag/js?id=G-F1X8YCCX9G"></script>
 			</>
 		)}
 	</head>
@@ -70,5 +85,6 @@ const ogImage = Astro.site && site.ogImage && new URL(site.ogImage, Astro.site);
 			<slot />
 		</div>
 		<RecentlyPlayed />
+		<CookieBanner />
 	</body>
 </html>
