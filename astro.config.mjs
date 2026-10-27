@@ -5,7 +5,7 @@ import sitemap from '@astrojs/sitemap';
 // https://astro.build/config
 export default defineConfig({
   // Your live domain. Needed for full URLs in link previews (og:url, og:image).
-  // site: 'https://your-domain.com',
+  site: 'https://kutlucangunay.com',
   // Only upright Latin is used on the page (its one accent, ü, is in the latin
   // subset), so italics and latin-ext would only add downloads.
   fonts: [
