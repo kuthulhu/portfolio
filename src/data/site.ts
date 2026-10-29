@@ -26,7 +26,7 @@ export const tabs = [
 ];
 
 // Icon row at the bottom of the About tab, in this order. `icon` is the file
-// name in src/assets/social. Replace each '#' with your profile link.
+// name in src/assets/social.
 export const socials = [
   { label: 'Twitter', icon: 'twitter', href: 'https://twitter.com/kuthulhu' },
   { label: 'Instagram', icon: 'instagram', href: 'https://www.instagram.com/kuthulhu' },
