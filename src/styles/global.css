@@ -217,14 +217,6 @@
     animation: recently-played-in 300ms var(--ease-gentle);
   }
 
-  .cookie-banner {
-    animation: cookie-banner-in 300ms var(--ease-gentle);
-  }
-
-  @keyframes cookie-banner-in {
-    from { opacity: 0; translate: 0 8px; }
-  }
-
   @keyframes vinyl-spin {
     to { rotate: 360deg; }
   }
@@ -235,8 +227,7 @@
 
   @media (prefers-reduced-motion: reduce) {
     .vinyl,
-    .recently-played-label,
-    .cookie-banner {
+    .recently-played-label {
       animation: none;
     }
 
