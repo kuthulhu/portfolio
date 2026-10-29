@@ -28,8 +28,11 @@ export const tabs = [
 // Icon row at the bottom of the About tab, in this order. `icon` is the file
 // name in src/assets/social.
 export const socials = [
+  { label: 'Behance', icon: 'behance', href: 'https://www.behance.net/kuthulhu' },
+  { label: 'GitHub', icon: 'github', href: 'https://github.com/kuthulhu' },
+  { label: 'LinkedIn', icon: 'linkedin', href: 'https://www.linkedin.com/in/kuthulhu' },
   { label: 'Twitter', icon: 'twitter', href: 'https://twitter.com/kuthulhu' },
   { label: 'Instagram', icon: 'instagram', href: 'https://www.instagram.com/kuthulhu' },
   { label: 'Threads', icon: 'threads', href: 'https://www.threads.net/@kuthulhu' },
-  { label: 'LinkedIn', icon: 'linkedin', href: 'https://www.linkedin.com/in/kuthulhu' },
+  { label: 'Steam', icon: 'steam', href: 'https://steamcommunity.com/id/kuthulhu' },
 ];
