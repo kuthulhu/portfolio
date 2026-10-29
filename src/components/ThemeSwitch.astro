@@ -1,8 +1,8 @@
 ---
 // Loaded as files rather than inlined: drawn into the page, their paths held up
 // first paint. Only the lamp for the current theme is downloaded.
-import lampOnUrl from '../assets/lamp-on.svg?no-inline';
-import lampOffUrl from '../assets/lamp-off.svg?no-inline';
+import lampOnUrl from '../assets/theme-switch/lamp-on.svg?no-inline';
+import lampOffUrl from '../assets/theme-switch/lamp-off.svg?no-inline';
 
 interface Props {
   class?: string;
@@ -27,8 +27,8 @@ const { class: className } = Astro.props;
 </button>
 
 <script>
-  import switchOnUrl from '../assets/switch-on.wav';
-  import switchOffUrl from '../assets/switch-off.wav';
+  import switchOnUrl from '../assets/theme-switch/switch-on.wav';
+  import switchOffUrl from '../assets/theme-switch/switch-off.wav';
 
   type Theme = 'light' | 'dark';
   // Read before first paint by the inline script in Layout.astro.
