@@ -13,9 +13,7 @@ export type ToolItem = {
 export const software: ToolItem[] = [
   { name: 'Figma', logo: 'figma' },
   { name: 'Jitter', logo: 'jitter' },
-  { name: 'Illustrator', logo: 'illustrator' },
-  { name: 'Photoshop', logo: 'photoshop' },
-  { name: 'InDesign', logo: 'indesign' },
+  { name: 'Adobe Suite', logo: 'adobe' },
   { name: 'VS Code', logo: 'vscode' },
   { name: 'Claude', logo: 'claude' },
 ];
