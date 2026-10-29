@@ -1,5 +1,17 @@
 ---
-import ExternalLink from '../ExternalLink.astro';
+import { socials } from '../../data/site';
+
+type SvgComponent = (props: Record<string, unknown>) => unknown;
+
+const icons = import.meta.glob<{ default: SvgComponent }>('../../assets/social/*.svg', {
+  eager: true,
+});
+
+const getIcon = (name: string) => {
+  const icon = icons[`../../assets/social/${name}.svg`];
+  if (!icon) throw new Error(`No icon found at src/assets/social/${name}.svg`);
+  return icon.default;
+};
 ---
 
 <div class="flex max-w-[640px] flex-col gap-5">
@@ -9,7 +21,25 @@ import ExternalLink from '../ExternalLink.astro';
   <p>
     As a designer, engineer, and a leader, I set a high standard for craftsmanship and execution. I thrive on taking intricate logic and heavy workflows and distilling them into clear, elegant interfaces. By bridging the gap between design vision and engineering reality, I guide teams to build thoughtful, scalable solutions that feel effortless to the end user.
   </p>
-  <p>
-    Contact me on <ExternalLink href="https://www.linkedin.com/in/kuthulhu">LinkedIn</ExternalLink>
-  </p>
+  <section class="mt-2 flex flex-col gap-1">
+    <p>Live in Istanbul, on:</p>
+    <ul class="mt-2 flex flex-wrap gap-6">
+      {socials.map((item) => {
+        const Icon = getIcon(item.icon);
+        return (
+          <li>
+            <a
+              href={item.href}
+              target="_blank"
+              rel="noopener"
+              aria-label={`${item.label} (opens in a new tab)`}
+              class="relative isolate flex text-fg before:absolute before:top-1/2 before:left-1/2 before:-z-10 before:size-10 before:-translate-1/2 before:scale-75 before:rounded-full before:bg-line before:opacity-0 before:transition-[opacity,scale] before:duration-200 before:ease-(--ease-snappy) hover:before:scale-100 hover:before:opacity-100 focus-visible:before:scale-100 focus-visible:before:opacity-100"
+            >
+              <Icon width="20" height="20" aria-hidden="true" />
+            </a>
+          </li>
+        );
+      })}
+    </ul>
+  </section>
 </div>
