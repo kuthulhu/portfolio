@@ -111,7 +111,12 @@ import VinylDark from '../assets/Vinyl-dark.svg';
   // Resolves with the embed's controller once Spotify's player is ready to play.
   const loadPlayer = async (uri: string) => {
     const api = await iframeApi;
-    return new Promise<EmbedController>((resolve) => api.createController(embed, { uri, width: 300, height: 80 }, resolve));
+    return new Promise<EmbedController>((resolve) => {
+      api.createController(embed, { uri, width: 300, height: 80 }, resolve);
+      // The player's iframe takes the embed's place. Spotify leaves it untitled, and every frame needs a title,
+      // even one hidden from assistive tech like this.
+      root.querySelector('iframe')?.setAttribute('title', 'Spotify player');
+    });
   };
 
   const load = async () => {
