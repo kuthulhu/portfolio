@@ -12,6 +12,7 @@ export type ToolItem = {
 // Shown in the first column of the Tools page, in this order.
 export const software: ToolItem[] = [
   { name: 'Figma', logo: 'figma' },
+  { name: 'Jitter', logo: 'jitter' },
   { name: 'Illustrator', logo: 'illustrator' },
   { name: 'Photoshop', logo: 'photoshop' },
   { name: 'InDesign', logo: 'indesign' },
