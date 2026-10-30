@@ -160,27 +160,14 @@
     /* Tilts from its bottom edge, the end nearest the cursor. */
     transform-origin: 50% 100%;
     opacity: 0;
-    translate: 0 4px;
-    scale: 0.98;
-  }
-
-  /* Once the cursor is in the list, every thumbnail is already full size, so
-     the rise only plays on entering and moving between rows just fades in. */
-  [data-work]:hover .work-preview {
-    translate: 0 0;
-    scale: 1;
+    /* Only the fade-out is timed; the hover state below clears it so previews appear instantly. */
+    transition: opacity 150ms ease-out;
   }
 
   .work-item:hover .work-preview,
   .work-item:focus-within .work-preview {
     opacity: 1;
-    translate: 0 0;
-    scale: 1;
-    transition-property: opacity, translate, scale;
-    transition-duration: 300ms;
-    /* Opacity fades in linearly: an ease-out curve front-loads it, so the
-       image looks like it pops in even though the rise is gentle. */
-    transition-timing-function: linear, var(--ease-gentle), var(--ease-gentle);
+    transition: none;
   }
 
   /* Active-tab underline. Its position is set from Tabs.astro; it only glides
@@ -229,11 +216,6 @@
     .vinyl,
     .recently-played-label {
       animation: none;
-    }
-
-    .work-item:hover .work-preview,
-    .work-item:focus-within .work-preview {
-      transition: none;
     }
   }
 }
