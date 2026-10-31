@@ -1,4 +1,5 @@
 ---
+import Garden from '../components/Garden.astro';
 import Header from '../components/Header.astro';
 import Tabs from '../components/Tabs.astro';
 import About from '../components/panels/About.astro';
@@ -31,4 +32,6 @@ const panels: Record<string, (props: Record<string, unknown>) => unknown> = {
       })
     }
   </main>
+  {/* Only shown under the work tab: it's hidden whenever that tab's panel is. */}
+  <Garden slot="foot" class="mt-auto [body:has(#panel-work[hidden])_&]:hidden" />
 </Layout>
