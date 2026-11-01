@@ -1,0 +1,403 @@
+---
+import type { ImageMetadata } from 'astro';
+import { Image, getImage } from 'astro:assets';
+import ArrowLeft from '../../assets/arrows/arrow-left.svg';
+import ArrowRight from '../../assets/arrows/arrow-right.svg';
+import { gallery } from '../../data/gallery';
+
+const arrowClass =
+  'lightbox-arrow absolute flex size-11 cursor-pointer items-center justify-center rounded-full bg-white/10 text-white transition-[background-color,opacity] duration-150 ease-out focus-visible:outline-white aria-disabled:cursor-default aria-disabled:opacity-30 motion-reduce:transition-none [@media(hover:hover)_and_(pointer:fine)]:hover:bg-white/20 [@media(hover:hover)_and_(pointer:fine)]:aria-disabled:hover:bg-white/10';
+
+const images = import.meta.glob<{ default: ImageMetadata }>(
+  '../../assets/gallery/*.{jpg,jpeg,png,webp,avif,JPG,JPEG,PNG,WEBP,AVIF}',
+  { eager: true },
+);
+
+// Cameras often save names like DSCF1185.JPG, so names match regardless of case.
+const byName = new Map(
+  Object.entries(images).map(([path, image]) => [path.split('/').pop()!.toLowerCase(), image.default]),
+);
+
+const getPhoto = (name: string) => {
+  const image = byName.get(name.toLowerCase());
+  if (!image) throw new Error(`No image found at src/assets/gallery/${name}`);
+  return image;
+};
+
+const months = ['january', 'february', 'march', 'april', 'may', 'june', 'july', 'august', 'september', 'october', 'november', 'december'];
+
+// Reads '2 September 2026' into a number that sorts by date (20260902) and the
+// date as shown in the lightbox, with the month capitalised however it was typed.
+// Anything else stops the build, so a typo can't quietly misplace a photo.
+const parseDate = (photo: (typeof gallery)[number]) => {
+  const [, day, month, year] = photo.date.trim().match(/^(\d{1,2})\s+([a-z]+)\s+(\d{4})$/i) ?? [];
+  const monthIndex = months.indexOf(month?.toLowerCase());
+  const date = new Date(Number(year), monthIndex, Number(day));
+  if (monthIndex === -1 || date.getDate() !== Number(day)) {
+    throw new Error(`Photo '${photo.image}' in src/data/gallery.ts has date '${photo.date}'; write it like '2 September 2026'.`);
+  }
+  const monthName = months[monthIndex][0].toUpperCase() + months[monthIndex].slice(1);
+  return {
+    key: Number(year) * 10000 + (monthIndex + 1) * 100 + Number(day),
+    label: `${Number(day)} ${monthName} ${year}`,
+  };
+};
+
+// Newest first; the sort keeps same-day photos in the order they're listed.
+const newestFirst = gallery
+  .map((photo) => ({ ...photo, ...parseDate(photo) }))
+  .sort((a, b) => b.key - a.key);
+
+// The lightbox copy keeps the photo's shape, in sizes up to the original's width (never enlarged).
+const photos = await Promise.all(
+  newestFirst.map(async (photo) => {
+    const src = getPhoto(photo.image);
+    const widths = [1200, 2000, 2800].filter((w) => w < src.width).concat(Math.min(src.width, 2800));
+    const full = await getImage({ src, width: Math.min(src.width, 2000), widths: [...new Set(widths)], sizes: '92vw' });
+    return { ...photo, src, full };
+  }),
+);
+
+// In the order each tag first appears in src/data/gallery.ts, not by date.
+const tags = [...new Set(gallery.map((photo) => photo.tag))];
+---
+
+{
+  photos.length > 0 && (
+    <div role="group" aria-label="Filter photos" data-filters class="mb-5 flex flex-wrap gap-2">
+      {['', ...tags].map((tag) => (
+        <button
+          type="button"
+          data-filter={tag}
+          aria-pressed={tag === '' ? 'true' : 'false'}
+          class="text-body-sm text-fg ring-line aria-pressed:bg-fg aria-pressed:text-bg aria-pressed:ring-fg h-8 cursor-pointer rounded-full px-3.5 ring-1 transition-[color,background-color,box-shadow] duration-200 ease-(--ease-snappy) ring-inset motion-reduce:transition-none [@media(hover:hover)_and_(pointer:fine)]:not-aria-pressed:hover:bg-line"
+        >
+          {tag || 'All'}
+        </button>
+      ))}
+    </div>
+  )
+}
+
+{
+  photos.length === 0 ? (
+    <p class="text-muted">Photos coming soon.</p>
+  ) : (
+    <ul data-gallery class="relative grid grid-cols-3 gap-1.5 sm:grid-cols-5 sm:gap-2">
+      {photos.map((photo) => (
+        <li data-tag={photo.tag}>
+          <button
+            type="button"
+            data-full-src={photo.full.src}
+            data-full-srcset={photo.full.srcSet.attribute}
+            data-width={photo.src.width}
+            data-height={photo.src.height}
+            data-title={photo.title}
+            data-meta={`${photo.tag}, ${photo.label}`}
+            aria-label={`Enlarge photo: ${photo.alt}`}
+            class="gallery-thumb bg-card block w-full cursor-zoom-in rounded-xl p-2"
+          >
+            <Image
+              src={photo.src}
+              alt={photo.alt}
+              width={480}
+              widths={[240, 480]}
+              sizes="(min-width: 800px) 140px, (min-width: 640px) 20vw, 33vw"
+              class="aspect-square w-full rounded-sm object-cover"
+            />
+          </button>
+        </li>
+      ))}
+    </ul>
+  )
+}
+
+{/* Clicking anywhere but the photo, arrows or strip closes it; so does Escape. Left and
+    right arrow keys step through the photos. The frame keeps room for the arrows: beside
+    the photo from sm up, below it on phones. */}
+<dialog
+  data-lightbox
+  aria-label="Photo"
+  tabindex="-1"
+  class="lightbox fixed inset-0 m-0 h-dvh max-h-none w-screen max-w-none cursor-zoom-out flex-col bg-black/80 p-[max(1rem,env(safe-area-inset-top))_max(1rem,env(safe-area-inset-right))_max(1rem,env(safe-area-inset-bottom))_max(1rem,env(safe-area-inset-left))] outline-none backdrop:bg-transparent open:flex sm:p-10"
+>
+  <div class="lightbox-frame grid min-h-0 w-full flex-1 place-items-center pb-15 sm:px-15 sm:pb-0">
+    <div class="relative">
+      <img alt="" sizes="92vw" decoding="async" class="lightbox-photo cursor-default rounded-xl bg-cover" />
+      {/* Lets clicks through to the photo, so clicking the caption doesn't close the lightbox.
+          The tag and date dim when a title sits above them, so the title leads. */}
+      <p
+        data-caption
+        class="pointer-events-none absolute bottom-3 left-1/2 w-max max-w-[calc(100%-1.5rem)] -translate-x-1/2 rounded-[15px] bg-black/50 px-3.5 py-1 text-center text-body-sm text-white backdrop-blur-md sm:bottom-4"
+      >
+        <span data-title hidden class="block"></span>
+        <span data-meta class="block data-with-title:text-white/70"></span>
+      </p>
+      {
+        photos.length > 1 && (
+          <>
+            <button
+              type="button"
+              data-step="-1"
+              aria-label="Previous photo"
+              class:list={[arrowClass, 'top-full right-1/2 mt-4 mr-2 sm:top-1/2 sm:right-full sm:mt-0 sm:mr-4 sm:-translate-y-1/2']}
+            >
+              <ArrowLeft width="20" height="20" aria-hidden="true" />
+            </button>
+            <button
+              type="button"
+              data-step="1"
+              aria-label="Next photo"
+              class:list={[arrowClass, 'top-full left-1/2 mt-4 ml-2 sm:top-1/2 sm:left-full sm:mt-0 sm:ml-4 sm:-translate-y-1/2']}
+            >
+              <ArrowRight width="20" height="20" aria-hidden="true" />
+            </button>
+          </>
+        )
+      }
+    </div>
+  </div>
+  {
+    photos.length > 1 && (
+      <div
+        data-strip
+        class="relative mx-auto mt-4 flex w-fit max-w-full shrink-0 cursor-default gap-1.5 overflow-x-auto p-1 [scrollbar-width:none] sm:mt-6"
+      >
+        {photos.map((photo, i) => (
+          <button
+            type="button"
+            data-index={i}
+            aria-label={`Show photo: ${photo.alt}`}
+            class="relative shrink-0 cursor-pointer overflow-hidden rounded-md after:absolute after:inset-0 after:bg-black/50 after:transition-opacity after:duration-150 after:ease-out focus-visible:outline-white aria-[current=true]:ring-1 aria-[current=true]:ring-white aria-[current=true]:after:opacity-0 motion-reduce:after:transition-none [@media(hover:hover)_and_(pointer:fine)]:hover:after:opacity-50"
+          >
+            <Image src={photo.src} alt="" height={112} loading="lazy" class="h-14 w-auto max-w-none" />
+          </button>
+        ))}
+      </div>
+    )
+  }
+</dialog>
+
+<script>
+  const grid = document.querySelector<HTMLElement>('[data-gallery]');
+  const lightbox = document.querySelector<HTMLDialogElement>('[data-lightbox]')!;
+  const photo = lightbox.querySelector<HTMLImageElement>('.lightbox-photo')!;
+  const title = lightbox.querySelector<HTMLElement>('[data-caption] [data-title]')!;
+  const meta = lightbox.querySelector<HTMLElement>('[data-caption] [data-meta]')!;
+  const arrows = [...lightbox.querySelectorAll<HTMLButtonElement>('[data-step]')];
+  const strip = lightbox.querySelector<HTMLElement>('[data-strip]');
+  const stripThumbs = [...(strip?.querySelectorAll<HTMLButtonElement>('[data-index]') ?? [])];
+  const thumbs = [...(grid?.querySelectorAll<HTMLButtonElement>('button[data-full-src]') ?? [])];
+  const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)');
+
+  let current = 0;
+  let closing = false;
+
+  // The lightbox only steps through photos the active filter shows.
+  const isShown = (index: number) => {
+    const item = thumbs[index].closest('li')!;
+    return !item.hidden && !('leaving' in item.dataset);
+  };
+
+  const neighbour = (from: number, direction: number) => {
+    for (let i = from + direction; i >= 0 && i < thumbs.length; i += direction) {
+      if (isShown(i)) return i;
+    }
+    return -1;
+  };
+
+  // Scrolls only the strip, never the page, to centre the current photo's thumbnail.
+  const revealInStrip = (smooth: boolean) => {
+    const thumb = stripThumbs[current];
+    if (!strip || !thumb || strip.scrollWidth <= strip.clientWidth) return;
+    strip.scrollTo({
+      left: thumb.offsetLeft - (strip.clientWidth - thumb.offsetWidth) / 2,
+      behavior: smooth && !reduceMotion.matches ? 'smooth' : 'instant',
+    });
+  };
+
+  const show = (index: number) => {
+    current = index;
+    const button = thumbs[index];
+    const thumb = button.querySelector('img')!;
+    const { fullSrc, fullSrcset, width, height } = button.dataset;
+    photo.removeAttribute('src');
+    photo.removeAttribute('srcset');
+    photo.style.setProperty('--w', width!);
+    photo.style.setProperty('--h', height!);
+    photo.alt = thumb.alt;
+    // The grid's copy is already loaded and has the same shape, so it fills in until the large one arrives.
+    photo.style.backgroundImage = `url("${thumb.currentSrc}")`;
+    photo.srcset = fullSrcset!;
+    photo.src = fullSrc!;
+    title.textContent = button.dataset.title ?? '';
+    title.hidden = !button.dataset.title;
+    meta.textContent = button.dataset.meta!;
+    meta.toggleAttribute('data-with-title', !title.hidden);
+    for (const arrow of arrows) {
+      arrow.ariaDisabled = String(neighbour(index, Number(arrow.dataset.step)) === -1);
+    }
+    stripThumbs.forEach((thumb, i) => {
+      if (i === index) thumb.setAttribute('aria-current', 'true');
+      else thumb.removeAttribute('aria-current');
+    });
+    revealInStrip(true);
+    // Starts loading the neighbours so stepping to them doesn't wait on the network.
+    for (const next of [neighbour(index, -1), neighbour(index, 1)]) {
+      if (next === -1) continue;
+      const preload = new Image();
+      preload.sizes = photo.sizes;
+      preload.srcset = thumbs[next].dataset.fullSrcset!;
+    }
+  };
+
+  const open = (button: HTMLButtonElement) => {
+    show(thumbs.indexOf(button));
+    closing = false;
+    lightbox.showModal();
+    // showModal focuses the first arrow, which some browsers then ring even after a click.
+    lightbox.focus();
+    // The strip had no layout while the dialog was closed, so it's centred now that it does.
+    revealInStrip(false);
+    if (!reduceMotion.matches) {
+      lightbox.animate({ opacity: [0, 1] }, { duration: 200, easing: 'ease-out' });
+      photo.animate({ scale: [0.96, 1] }, { duration: 250, easing: 'cubic-bezier(0.23, 1, 0.32, 1)' });
+    }
+  };
+
+  const goTo = (index: number) => {
+    if (closing || index === current || index < 0 || index >= thumbs.length || !isShown(index)) return;
+    show(index);
+    // Fades in place only: any slide between photos reads as the picture swaying.
+    if (!reduceMotion.matches) {
+      photo.animate({ opacity: [0.6, 1] }, { duration: 180, easing: 'ease-out' });
+    }
+  };
+
+  const step = (direction: number) => goTo(neighbour(current, direction));
+
+  const close = () => {
+    if (closing || !lightbox.open) return;
+    closing = true;
+    if (reduceMotion.matches) {
+      lightbox.close();
+      return;
+    }
+    const fade = lightbox.animate({ opacity: [1, 0] }, { duration: 150, easing: 'ease-in' });
+    fade.finished.then(() => {
+      if (closing) lightbox.close();
+    });
+  };
+
+  const filters = [...document.querySelectorAll<HTMLButtonElement>('[data-filters] [data-filter]')];
+
+  // Cards that stay glide from where they were to their new place; the glide eases
+  // in as well as out, since a card can cross the whole grid and a fast start reads
+  // as a jump. Leaving cards shrink a touch and soften away where they stood. Arriving
+  // cards only fade and sharpen in their final spot, a beat later so they land as the
+  // others settle.
+  const applyFilter = (button: HTMLButtonElement) => {
+    if (!grid) return;
+    const tag = button.dataset.filter;
+    for (const filter of filters) filter.ariaPressed = String(filter === button);
+
+    const items = [...grid.querySelectorAll<HTMLElement>('li')];
+    // Measured before anything changes, so a filter picked mid-glide starts from
+    // where each card is on screen right now.
+    const before = new Map(items.filter((item) => !item.hidden && !('leaving' in item.dataset)).map((item) => [item, item.getBoundingClientRect()]));
+
+    for (const item of items) {
+      for (const animation of item.getAnimations()) animation.cancel();
+      if ('leaving' in item.dataset) {
+        delete item.dataset.leaving;
+        item.removeAttribute('style');
+      }
+      item.hidden = Boolean(tag) && item.dataset.tag !== tag;
+    }
+    stripThumbs.forEach((thumb, i) => (thumb.hidden = !isShown(i)));
+    if (reduceMotion.matches) return;
+
+    const gridBox = grid.getBoundingClientRect();
+    for (const item of items) {
+      const from = before.get(item);
+      if (!item.hidden && from) {
+        const to = item.getBoundingClientRect();
+        const dx = from.left - to.left;
+        const dy = from.top - to.top;
+        if (dx || dy) {
+          item.animate({ translate: [`${dx}px ${dy}px`, '0 0'] }, { duration: 500, easing: 'cubic-bezier(0.45, 0, 0.15, 1)' });
+        }
+      } else if (!item.hidden) {
+        item.animate(
+          { opacity: [0, 1], filter: ['blur(4px)', 'blur(0)'] },
+          { duration: 450, delay: 160, easing: 'cubic-bezier(0.25, 1, 0.5, 1)', fill: 'backwards' },
+        );
+      } else if (from) {
+        // Held at its old spot, out of the grid's flow, until it has faded.
+        item.hidden = false;
+        item.dataset.leaving = '';
+        Object.assign(item.style, {
+          position: 'absolute',
+          left: `${from.left - gridBox.left}px`,
+          top: `${from.top - gridBox.top}px`,
+          width: `${from.width}px`,
+          pointerEvents: 'none',
+        });
+        const leave = item.animate(
+          { opacity: [1, 0], scale: [1, 0.94], filter: ['blur(0)', 'blur(4px)'] },
+          { duration: 260, easing: 'cubic-bezier(0.4, 0, 1, 1)', fill: 'forwards' },
+        );
+        leave.onfinish = () => {
+          item.hidden = true;
+          delete item.dataset.leaving;
+          item.removeAttribute('style');
+          leave.cancel();
+        };
+      }
+    }
+  };
+
+  document.querySelector('[data-filters]')?.addEventListener('click', (event) => {
+    const button = (event.target as Element).closest<HTMLButtonElement>('[data-filter]');
+    if (button && button.ariaPressed !== 'true') applyFilter(button);
+  });
+
+  let openedByKeyboard = false;
+
+  grid?.addEventListener('click', (event) => {
+    const button = (event.target as Element).closest<HTMLButtonElement>('button[data-full-src]');
+    if (!button) return;
+    // A click from Enter or Space has no pointer press behind it, so its detail is 0.
+    openedByKeyboard = event.detail === 0;
+    open(button);
+  });
+
+  lightbox.addEventListener('click', (event) => {
+    const target = event.target as Element;
+    const arrow = target.closest<HTMLButtonElement>('[data-step]');
+    const stripThumb = target.closest<HTMLButtonElement>('[data-index]');
+    if (arrow) step(Number(arrow.dataset.step));
+    else if (stripThumb) goTo(Number(stripThumb.dataset.index));
+    else if (target !== photo && !target.closest('[data-strip]')) close();
+  });
+
+  lightbox.addEventListener('keydown', (event) => {
+    const direction = { ArrowLeft: -1, ArrowRight: 1 }[event.key];
+    if (!direction) return;
+    event.preventDefault();
+    step(direction);
+  });
+
+  lightbox.addEventListener('cancel', (event) => {
+    event.preventDefault();
+    close();
+  });
+
+  // Opened from the keyboard, focus returns to the photo last shown so the keyboard
+  // picks up where the lightbox left off. Opened by mouse or touch, nothing is left
+  // focused, since browsers would ring the card the dialog hands focus back to.
+  lightbox.addEventListener('close', () => {
+    if (openedByKeyboard) thumbs[current]?.focus({ preventScroll: true });
+    else (document.activeElement as HTMLElement | null)?.blur();
+  });
+</script>

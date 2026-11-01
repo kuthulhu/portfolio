@@ -2,6 +2,7 @@
 import Header from '../components/Header.astro';
 import Tabs from '../components/Tabs.astro';
 import About from '../components/panels/About.astro';
+import Gallery from '../components/panels/Gallery.astro';
 import Tools from '../components/panels/Tools.astro';
 import Work from '../components/panels/Work.astro';
 import Layout from '../layouts/Layout.astro';
@@ -11,6 +12,7 @@ import { tabs } from '../data/site';
 const panels: Record<string, (props: Record<string, unknown>) => unknown> = {
   work: Work,
   tools: Tools,
+  gallery: Gallery,
   about: About,
 };
 ---

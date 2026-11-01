@@ -1,5 +1,6 @@
 // Everything you'd edit to personalize the site lives in src/data: this file
-// for the basics and tabs, work.ts for projects and tools.ts for the Tools tab.
+// for the basics and tabs, work.ts for projects, tools.ts for the Tools tab and
+// gallery.ts for the Camera Roll tab.
 
 export const site = {
   name: 'Kutlu Can Günay',
@@ -22,6 +23,7 @@ export const site = {
 export const tabs = [
   { id: 'work', label: 'Selected Work' },
   { id: 'tools', label: 'Tools' },
+  { id: 'gallery', label: 'Camera Roll' },
   { id: 'about', label: 'About' },
 ];
 
