@@ -72,7 +72,7 @@ const ogImage = Astro.site && site.ogImage && new URL(site.ogImage, Astro.site);
 		{/* In the page's top-right corner, over the backdrop. A classic scrollbar (about 15px)
 		    covers the page's right edge, so the inset keeps the switch clear of it. */}
 		<ThemeSwitch class="absolute top-[max(16px,env(safe-area-inset-top))] right-[max(16px,env(safe-area-inset-right))] z-10 sm:top-6 sm:right-6" />
-		<div class="relative mx-auto w-full max-w-[800px] pt-16 pr-[max(1.5rem,env(safe-area-inset-right))] pb-24 pl-[max(1.5rem,env(safe-area-inset-left))] sm:px-10 sm:pt-[72px]">
+		<div class="relative mx-auto w-full max-w-[800px] py-16 pr-[max(1.5rem,env(safe-area-inset-right))] pl-[max(1.5rem,env(safe-area-inset-left))] sm:px-10 sm:py-[72px]">
 			<slot />
 		</div>
 		{/* Full-width content below the column, like the home page's garden. */}

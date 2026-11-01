@@ -299,17 +299,18 @@ export class Garden {
       if (this.layout()) this.paint();
     }).observe(host);
 
-    // Runs only while on screen. It's planted once at least half of it is in view,
-    // so the growing is seen rather than over before the visitor scrolls down.
-    new IntersectionObserver(
-      ([entry]) => {
-        this.visible = entry.isIntersecting;
-        if (entry.intersectionRatio >= 0.5) this.planted = true;
-        if (this.visible) this.start();
-        else this.stop();
-      },
-      { threshold: [0, 0.5] },
-    ).observe(host);
+    // Runs only while on screen. It's planted as soon as its top edge comes into view,
+    // just past the end of the content, so the flowers are already growing as the
+    // visitor reaches them instead of waiting for them to scroll all the way down.
+    new IntersectionObserver(([entry]) => {
+      this.visible = entry.isIntersecting;
+      if (this.visible) {
+        this.planted = true;
+        this.start();
+      } else {
+        this.stop();
+      }
+    }).observe(host);
 
     this.canvas.addEventListener('pointerdown', this.pointerDown);
     this.canvas.addEventListener('pointermove', this.pointerMove);
