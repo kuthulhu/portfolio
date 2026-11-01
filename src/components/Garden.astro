@@ -1,0 +1,21 @@
+---
+interface Props {
+  class?: string;
+}
+
+const { class: className } = Astro.props;
+---
+
+{/* A garden of 0s and 1s to brush through, drawn by src/scripts/garden.ts. It's
+    decorative, so it's hidden from assistive tech. touch-action lets a finger swipe
+    sideways through the flowers while vertical swipes still scroll the page. */}
+<div aria-hidden="true" data-garden class:list={['relative h-60 w-full shrink-0 sm:h-[300px]', className]}>
+  <canvas class="absolute inset-0 block size-full touch-pan-y"></canvas>
+</div>
+
+<script>
+  import { Garden } from '../scripts/garden';
+
+  const host = document.querySelector<HTMLElement>('[data-garden]');
+  if (host) new Garden(host);
+</script>
