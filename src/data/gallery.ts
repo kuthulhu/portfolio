@@ -1,4 +1,4 @@
-// Photos on the Camera Roll tab, five to a row (three on phones), newest first by `date`; photos
+// Photos on the Camera Roll tab, as many to a row as fit, newest first by `date`; photos
 // with the same date keep the order they're listed in here. Each shows as a
 // square crop in the grid and opens at its original shape when clicked.
 
