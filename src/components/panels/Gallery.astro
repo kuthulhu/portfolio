@@ -6,7 +6,7 @@ import ArrowRight from '../../assets/arrows/arrow-right.svg';
 import { gallery } from '../../data/gallery';
 
 const arrowClass =
-  'lightbox-arrow absolute flex size-11 cursor-pointer items-center justify-center rounded-full bg-white/10 text-white transition-[background-color,opacity] duration-150 ease-out focus-visible:outline-white aria-disabled:cursor-default aria-disabled:opacity-30 motion-reduce:transition-none [@media(hover:hover)_and_(pointer:fine)]:hover:bg-white/20 [@media(hover:hover)_and_(pointer:fine)]:aria-disabled:hover:bg-white/10';
+  'lightbox-arrow absolute flex size-11 cursor-pointer after:absolute after:-inset-2 items-center justify-center rounded-full bg-white/10 text-white transition-[background-color,opacity] duration-150 ease-out focus-visible:outline-white aria-disabled:cursor-default aria-disabled:opacity-30 motion-reduce:transition-none [@media(hover:hover)_and_(pointer:fine)]:hover:bg-white/20 [@media(hover:hover)_and_(pointer:fine)]:aria-disabled:hover:bg-white/10';
 
 const images = import.meta.glob<{ default: ImageMetadata }>(
   '../../assets/gallery/*.{jpg,jpeg,png,webp,avif,JPG,JPEG,PNG,WEBP,AVIF}',
@@ -123,15 +123,17 @@ const tags = [...new Set(gallery.map((photo) => photo.tag))];
     right arrow keys step through the photos. The arrows are pinned to the frame, not
     the photo, so they stay put whatever its shape: at the screen's left and right
     edges from sm up, and side by side along the bottom on phones, in the room the
-    frame keeps free for them. */}
+    frame keeps free for them. Each arrow catches taps a little beyond its circle, which
+    on phones closes the gap between the two. On touch screens a sideways swipe steps
+    too; the frame leaves up and down drags and pinches to the browser. */}
 <dialog
   data-lightbox
   aria-label="Photo"
   tabindex="-1"
   class="lightbox fixed inset-0 m-0 h-dvh max-h-none w-screen max-w-none cursor-zoom-out flex-col bg-black/80 p-[max(1rem,env(safe-area-inset-top))_max(1rem,env(safe-area-inset-right))_max(1rem,env(safe-area-inset-bottom))_max(1rem,env(safe-area-inset-left))] outline-none backdrop:bg-transparent open:flex sm:p-10"
 >
-  <div class="lightbox-frame relative grid min-h-0 w-full flex-1 place-items-center pb-15 sm:px-15 sm:pb-0">
-    <div class="relative">
+  <div class="lightbox-frame relative grid min-h-0 w-full flex-1 touch-pan-y touch-pinch-zoom place-items-center pb-15 sm:px-15 sm:pb-0">
+    <div data-slide class="relative">
       <img alt="" sizes="92vw" decoding="async" class="lightbox-photo cursor-default rounded-xl bg-cover" />
       {/* Lets clicks through to the photo, so clicking the caption doesn't close the lightbox.
           The tag and date dim when a title sits above them, so the title leads. */}
@@ -190,6 +192,8 @@ const tags = [...new Set(gallery.map((photo) => photo.tag))];
 <script>
   const grid = document.querySelector<HTMLElement>('[data-gallery]');
   const lightbox = document.querySelector<HTMLDialogElement>('[data-lightbox]')!;
+  const frame = lightbox.querySelector<HTMLElement>('.lightbox-frame')!;
+  const slide = lightbox.querySelector<HTMLElement>('[data-slide]')!;
   const photo = lightbox.querySelector<HTMLImageElement>('.lightbox-photo')!;
   const title = lightbox.querySelector<HTMLElement>('[data-caption] [data-title]')!;
   const meta = lightbox.querySelector<HTMLElement>('[data-caption] [data-meta]')!;
@@ -534,14 +538,105 @@ const tags = [...new Set(gallery.map((photo) => photo.tag))];
     open(button);
   });
 
+  // Tapping quickly through the photos, a tap can land just off an arrow or thumbnail,
+  // and a swipe can leave a click behind; neither should close the lightbox, so for a
+  // moment after either, clicks outside the photo do nothing.
+  let closeHeldUntil = 0;
+  const holdClose = () => (closeHeldUntil = performance.now() + 600);
+
   lightbox.addEventListener('click', (event) => {
     const target = event.target as Element;
     const arrow = target.closest<HTMLButtonElement>('[data-step]');
     const stripThumb = target.closest<HTMLButtonElement>('[data-index]');
-    if (arrow) step(Number(arrow.dataset.step));
-    else if (stripThumb) goTo(Number(stripThumb.dataset.index));
-    else if (target !== photo && !target.closest('[data-strip]')) close();
+    if (arrow) {
+      holdClose();
+      step(Number(arrow.dataset.step));
+    } else if (stripThumb) {
+      holdClose();
+      goTo(Number(stripThumb.dataset.index));
+    } else if (target !== photo && !target.closest('[data-strip]') && performance.now() > closeHeldUntil) close();
   });
+
+  // The photo follows a sideways swipe and lets go to its neighbour once dragged far
+  // enough or flicked, leaving to the side it was pushed while the next one comes in
+  // from the other. With nothing further that way it only gives a little and springs
+  // back.
+  const SWIPE_DISTANCE = 60;
+  const SWIPE_SPEED = 0.4; // px per ms
+  const SLIDE_OFFSET = 60;
+  type Swipe = { id: number; startX: number; x: number; t: number; speed: number; dragging: boolean };
+  let swipe: Swipe | null = null;
+  let sliding = false;
+
+  frame.addEventListener('pointerdown', (event) => {
+    // A second finger means a pinch, which the browser zooms.
+    if (swipe && !event.isPrimary) {
+      endSwipe(event, false);
+      return;
+    }
+    if (event.pointerType !== 'touch' || closing || sliding) return;
+    if ((event.target as Element).closest('[data-step]')) return;
+    for (const animation of slide.getAnimations()) animation.cancel();
+    swipe = { id: event.pointerId, startX: event.clientX, x: event.clientX, t: event.timeStamp, speed: 0, dragging: false };
+  });
+
+  frame.addEventListener('pointermove', (event) => {
+    if (event.pointerId !== swipe?.id) return;
+    const elapsed = event.timeStamp - swipe.t;
+    if (elapsed > 0) swipe.speed = (event.clientX - swipe.x) / elapsed;
+    swipe.x = event.clientX;
+    swipe.t = event.timeStamp;
+    const dx = swipe.x - swipe.startX;
+    if (!swipe.dragging) {
+      if (Math.abs(dx) < 8) return;
+      swipe.dragging = true;
+      frame.setPointerCapture(event.pointerId);
+    }
+    const towards = dx < 0 ? 1 : -1;
+    slide.style.translate = `${neighbour(current, towards) === -1 ? dx * 0.25 : dx}px`;
+  });
+
+  const endSwipe = (event: PointerEvent, canStep = event.type === 'pointerup') => {
+    if (!swipe) return;
+    const { dragging, startX, x, speed } = swipe;
+    swipe = null;
+    if (!dragging) return;
+    holdClose();
+    const towards = x - startX < 0 ? 1 : -1;
+    const next = neighbour(current, towards);
+    const flicked = speed * -towards > SWIPE_SPEED;
+    const flickedBack = speed * towards > SWIPE_SPEED;
+    const from = slide.style.translate || '0px';
+    slide.style.translate = '';
+
+    if (!canStep || next === -1 || closing || !(flicked || (Math.abs(x - startX) > SWIPE_DISTANCE && !flickedBack))) {
+      if (!reduceMotion.matches) {
+        slide.animate({ translate: [from, '0px'] }, { duration: 300, easing: 'cubic-bezier(0.23, 1, 0.32, 1)' });
+      }
+      return;
+    }
+    if (reduceMotion.matches) {
+      show(next);
+      return;
+    }
+    sliding = true;
+    const leave = slide.animate(
+      { translate: [from, `${parseFloat(from) - towards * SLIDE_OFFSET}px`], opacity: [1, 0] },
+      { duration: 120, easing: 'ease-in', fill: 'forwards' },
+    );
+    leave.finished.then(() => {
+      show(next);
+      leave.cancel();
+      sliding = false;
+      slide.animate(
+        { translate: [`${towards * SLIDE_OFFSET}px`, '0px'], opacity: [0, 1] },
+        { duration: 280, easing: 'cubic-bezier(0.23, 1, 0.32, 1)' },
+      );
+    });
+  };
+
+  frame.addEventListener('pointerup', (event) => event.pointerId === swipe?.id && endSwipe(event));
+  frame.addEventListener('pointercancel', (event) => event.pointerId === swipe?.id && endSwipe(event));
 
   lightbox.addEventListener('keydown', (event) => {
     const direction = { ArrowLeft: -1, ArrowRight: 1 }[event.key];
