@@ -1,15 +1,27 @@
 # Kutlu Can Günay — Portfolio
 
-Personal website of Kutlu Can Günay, product designer. A small, quiet site with my work history and a bit about me.
+Personal website of Kutlu Can Günay, product designer. A small, quiet site with my work history, the tools I use, some photos and a bit about me.
 
 **Live:** [kutlucangunay.com](https://kutlucangunay.com) · **Portfolio:** [behance.net/kuthulhu](https://behance.net/kuthulhu)
 
+## What's on it
+
+Everything sits on one page, split into tabs:
+
+- **Selected Work:** projects grouped by role, with a cover that shows on hover on larger screens. An interactive garden drawn out of 0s and 1s grows at the foot of this tab
+- **Tools:** the software and hardware I work with
+- **Camera Roll:** a photo grid you can filter by tag, with a lightbox you can swipe through on phones
+- **About:** a short bio and a row of social links
+
+The last track I played on Spotify shows at the bottom of every tab. A lamp switch in the corner picks light or dark mode. Until it's used, the site follows the system setting.
+
 ## Built with
 
-- [Astro](https://astro.build): static pages, with view transitions between tabs
+- [Astro](https://astro.build) 7: a static site, no framework components
 - [Tailwind CSS](https://tailwindcss.com) v4
 - [Inter](https://rsms.me/inter/) for body text, [Inter Tight](https://fonts.google.com/specimen/Inter+Tight) for headings, self-hosted through Astro's Fonts API
-- Light and dark mode that follow the system setting
+- [@astrojs/sitemap](https://docs.astro.build/en/guides/integrations-guide/sitemap/) for the sitemap, which `robots.txt` points to
+- GitHub Pages for hosting, deployed by GitHub Actions
 
 ## Running locally
 
@@ -24,14 +36,32 @@ npm run preview  # preview the production build
 
 ## Editing content
 
-Almost everything lives in [`src/data`](src/data):
+Almost everything lives in [`src/data`](src/data). Each file has comments explaining its fields.
 
-- **Name, role and portfolio link:** the `site` object in [`site.ts`](src/data/site.ts)
-- **Tabs:** the `tabs` list in [`site.ts`](src/data/site.ts). To add a tab, add an entry there, create its panel in `src/components/panels` and register it under the same id in `src/pages/index.astro`
-- **Selected work:** the `work` list in [`work.ts`](src/data/work.ts), grouped by role. Write years in quotes, e.g. `'2024 – 2026'`
-- **Software and hardware:** the `software` and `hardware` lists in [`tools.ts`](src/data/tools.ts)
+- **Name, role, description and link preview image:** the `site` object in [`site.ts`](src/data/site.ts). The preview image is a 1200×630 JPG in `public/`
+- **Tabs:** the `tabs` list in [`site.ts`](src/data/site.ts). To add a tab, add an entry there, create its panel in `src/components/panels` and register it under the same id in [`src/pages/index.astro`](src/pages/index.astro)
+- **Social links:** the `socials` list in [`site.ts`](src/data/site.ts). Icons go in `src/assets/social`
+- **Selected work:** the `work` list in [`work.ts`](src/data/work.ts), grouped by role. Write years in quotes, e.g. `'2024–2026'`. Covers go in `src/assets/works`
+- **Software and hardware:** the `software` and `hardware` lists in [`tools.ts`](src/data/tools.ts). Logos go in `src/assets/tools`, hardware icons in `src/assets/hardware`
+- **Camera Roll:** the `gallery` list in [`gallery.ts`](src/data/gallery.ts). Put the original photo in `src/assets/gallery`; smaller versions are made at build. Photos are sorted newest first by `date`, and each `tag` gets a filter button
 
 The About text is in [`src/components/panels/About.astro`](src/components/panels/About.astro).
+
+## Deploying
+
+Every push to `main` builds the site and deploys it to GitHub Pages ([`astro.yml`](.github/workflows/astro.yml)).
+
+### Recently played
+
+Once an hour, [`update-spotify.yml`](.github/workflows/update-spotify.yml) runs [`scripts/fetch-spotify.mjs`](scripts/fetch-spotify.mjs), which writes the last played track to `public/spotify.json`. If the track changed, it commits the file and starts a deploy.
+
+It needs three repository secrets: `SPOTIFY_CLIENT_ID`, `SPOTIFY_CLIENT_SECRET` and `SPOTIFY_REFRESH_TOKEN`. The first two come from an app on the Spotify developer dashboard. To get the refresh token, add `http://127.0.0.1:8888/callback` as a Redirect URI in that app, then run:
+
+```sh
+SPOTIFY_CLIENT_ID=... SPOTIFY_CLIENT_SECRET=... node scripts/get-spotify-token.mjs
+```
+
+Since the workflow commits to `main`, pull before you push.
 
 ## Design tokens
 
@@ -40,17 +70,23 @@ Colors and the type scale are defined in [`src/styles/global.css`](src/styles/gl
 | Type | Classes |
 | --- | --- |
 | Headings (Inter Tight) | `text-h1`, `text-h2`, `text-h3`, `text-h4` |
-| Body (Inter) | `text-body-lg`, `text-body-md`, `text-body-sm` |
-| Colors | `text-fg`, `text-muted`, `text-accent`, `bg-line` |
+| Body (Inter) | `text-body-lg`, `text-body-md`, `text-body-sm`, `text-body-xs` |
+| Colors | `bg`, `fg`, `card`, `muted`, `line`, `accent`, e.g. `text-muted` or `bg-card` |
+
+Each color has a light and a dark value.
 
 ## Project structure
 
 ```text
 src/
-├── assets/       avatar and background image
-├── components/   Header, Tabs
-├── data/         site.ts, all editable content
-├── layouts/      page shell (head, fonts, header, tabs)
-├── pages/        one file per tab
+├── assets/       images, icons and sounds, one folder per kind
+├── components/   Header, Tabs, ThemeSwitch, Garden, RecentlyPlayed
+│   └── panels/   one panel per tab
+├── data/         all editable content
+├── layouts/      page shell (head, fonts, theme, recently played)
+├── pages/        the home page, 404 and robots.txt
+├── scripts/      the garden's drawing and animation
 └── styles/       global.css, colors and type scale
+scripts/          Spotify scripts run by GitHub Actions
+public/           favicons, link preview image, spotify.json
 ```
