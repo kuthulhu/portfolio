@@ -13,7 +13,7 @@ Everything sits on one page, split into tabs:
 - **Camera Roll:** a photo grid you can filter by tag, with a lightbox you can swipe through on phones
 - **About:** a short bio and a row of social links
 
-The last track I played on Spotify shows at the bottom of every tab. A lamp switch in the corner picks light or dark mode. Until it's used, the site follows the system setting.
+A lamp switch in the corner picks light or dark mode. Until it's used, the site follows the system setting.
 
 ## Built with
 
@@ -51,18 +51,6 @@ The About text is in [`src/components/panels/About.astro`](src/components/panels
 
 Every push to `main` builds the site and deploys it to GitHub Pages ([`astro.yml`](.github/workflows/astro.yml)).
 
-### Recently played
-
-Once an hour, [`update-spotify.yml`](.github/workflows/update-spotify.yml) runs [`scripts/fetch-spotify.mjs`](scripts/fetch-spotify.mjs), which writes the last played track to `public/spotify.json`. If the track changed, it commits the file and starts a deploy.
-
-It needs three repository secrets: `SPOTIFY_CLIENT_ID`, `SPOTIFY_CLIENT_SECRET` and `SPOTIFY_REFRESH_TOKEN`. The first two come from an app on the Spotify developer dashboard. To get the refresh token, add `http://127.0.0.1:8888/callback` as a Redirect URI in that app, then run:
-
-```sh
-SPOTIFY_CLIENT_ID=... SPOTIFY_CLIENT_SECRET=... node scripts/get-spotify-token.mjs
-```
-
-Since the workflow commits to `main`, pull before you push.
-
 ## Design tokens
 
 Colors and the type scale are defined in [`src/styles/global.css`](src/styles/global.css) and available as Tailwind classes:
@@ -80,13 +68,12 @@ Each color has a light and a dark value.
 ```text
 src/
 ├── assets/       images, icons and sounds, one folder per kind
-├── components/   Header, Tabs, ThemeSwitch, Garden, RecentlyPlayed
+├── components/   Header, Tabs, ThemeSwitch, Garden
 │   └── panels/   one panel per tab
 ├── data/         all editable content
-├── layouts/      page shell (head, fonts, theme, recently played)
+├── layouts/      page shell (head, fonts, theme)
 ├── pages/        the home page, 404 and robots.txt
 ├── scripts/      the garden's drawing and animation
 └── styles/       global.css, colors and type scale
-scripts/          Spotify scripts run by GitHub Actions
-public/           favicons, link preview image, spotify.json
+public/           favicons, link preview image
 ```

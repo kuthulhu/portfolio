@@ -1,7 +1,6 @@
 ---
 import { Font, Image } from 'astro:assets';
 import backdrop from '../assets/backgrounds/back1.png';
-import RecentlyPlayed from '../components/RecentlyPlayed.astro';
 import ThemeSwitch from '../components/ThemeSwitch.astro';
 import { site } from '../data/site';
 import '../styles/global.css';
@@ -77,6 +76,5 @@ const ogImage = Astro.site && site.ogImage && new URL(site.ogImage, Astro.site);
 		</div>
 		{/* Full-width content below the column, like the home page's garden. */}
 		<slot name="foot" />
-		<RecentlyPlayed />
 	</body>
 </html>
