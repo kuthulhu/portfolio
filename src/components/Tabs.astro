@@ -14,13 +14,13 @@ import { tabs } from '../data/site';
           aria-controls={`panel-${tab.id}`}
           aria-selected={i === 0 ? 'true' : 'false'}
           tabindex={i === 0 ? 0 : -1}
-          class="block shrink-0 cursor-pointer py-2 text-muted transition-colors duration-150 aria-selected:text-fg [@media(hover:hover)_and_(pointer:fine)]:hover:text-fg"
+          class="block shrink-0 cursor-pointer py-2 text-muted transition-[color,scale] duration-150 ease-(--ease-snappy) active:scale-[0.97] aria-selected:text-fg motion-reduce:transition-colors motion-reduce:active:scale-100 [@media(hover:hover)_and_(pointer:fine)]:hover:text-fg"
         >
           {tab.label}
         </button>
       ))
     }
-    <span aria-hidden="true" data-tab-indicator class="tab-indicator absolute bottom-0.5 left-0 h-0.5 rounded-full bg-line"></span>
+    <span aria-hidden="true" data-tab-indicator class="tab-indicator absolute bottom-0.5 left-0 h-0.5 w-[100px] rounded-full bg-line"></span>
   </div>
 </nav>
 
@@ -30,16 +30,17 @@ import { tabs } from '../data/site';
   const indicator = tablist.querySelector<HTMLElement>('[data-tab-indicator]')!;
   const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)');
   const panelOf = (tab: HTMLElement) => document.getElementById(tab.getAttribute('aria-controls')!)!;
+  const SNAPPY_EASE = 'cubic-bezier(0.23, 1, 0.32, 1)';
+  const INDICATOR_BASE_WIDTH = 100;
 
   let active = tabs.find((tab) => tab.ariaSelected === 'true') ?? tabs[0];
 
   const placeIndicator = (animate: boolean) => {
     indicator.toggleAttribute('data-animate', animate && !reduceMotion.matches);
-    indicator.style.setProperty('--tab-x', `${active.offsetLeft}px`);
-    indicator.style.setProperty('--tab-width', `${active.offsetWidth}px`);
+    indicator.style.transform = `translateX(${active.offsetLeft}px) scaleX(${active.offsetWidth / INDICATOR_BASE_WIDTH})`;
   };
 
-  const select = (tab: HTMLButtonElement) => {
+  const select = (tab: HTMLButtonElement, animate: boolean) => {
     if (tab === active) return;
     for (const t of tabs) {
       const selected = t === tab;
@@ -48,18 +49,22 @@ import { tabs } from '../data/site';
       panelOf(t).hidden = !selected;
     }
     active = tab;
-    placeIndicator(true);
-    if (!reduceMotion.matches) {
-      panelOf(tab).animate({ opacity: [0, 1] }, { duration: 250, easing: 'ease-out' });
+    placeIndicator(animate);
+    if (animate) {
+      panelOf(tab).animate(
+        { opacity: [0, 1] },
+        { duration: reduceMotion.matches ? 150 : 200, easing: reduceMotion.matches ? 'ease' : SNAPPY_EASE },
+      );
     }
   };
 
   tablist.addEventListener('click', (event) => {
     const tab = (event.target as Element).closest<HTMLButtonElement>('[role="tab"]');
-    if (tab) select(tab);
+    if (tab) select(tab, true);
   });
 
   // Arrow keys, Home and End move between tabs, following the WAI-ARIA tabs pattern.
+  // Keyboard switches stay instant (no animation delay).
   tablist.addEventListener('keydown', (event) => {
     const i = tabs.indexOf(document.activeElement as HTMLButtonElement);
     if (i === -1) return;
@@ -72,7 +77,7 @@ import { tabs } from '../data/site';
     if (!next) return;
     event.preventDefault();
     next.focus();
-    select(next);
+    select(next, false);
   });
 
   // Also runs once on load. Tab widths shift when the web font swaps in, so

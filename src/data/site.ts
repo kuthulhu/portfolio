@@ -15,6 +15,9 @@ export const site = {
   // Link preview image: a 1200×630 file in /public. Keep it small (JPG, < 300 KB)
   // so WhatsApp and others don't skip it. The domain is added at build time.
   ogImage: '/og.jpg' as string | undefined,
+  // Shows the sticky circular "open to work" badge in the bottom-right corner,
+  // linking to the LinkedIn entry in `socials` below.
+  openToWork: true,
 };
 
 // Tabs render in this order, all on the home page; the first one opens by

@@ -16,7 +16,7 @@ const getImage = (name: string) => {
 ---
 
 {/* Previews are positioned against this wrapper, out of the list's flow, so hovering never shifts it.
-    The script below moves them with the cursor through --preview-x and --preview-y. */}
+    The script below updates transform directly on the active preview to avoid parent CSS variable recalcs. */}
 <div data-work class="relative flex flex-col gap-10">
   {
     work.map((role) => (
@@ -32,7 +32,7 @@ const getImage = (name: string) => {
             <li class="work-item group py-1">
               {/* The link's ::after stretches over this wrapper and the row's padding, so the whole row is clickable. */}
               <div class="relative">
-                <h3 class="text-h4 transition-colors duration-150 ease-out group-focus-within:text-accent group-hover:text-accent motion-reduce:transition-none">
+                <h3 class="text-h4 transition-colors duration-150 ease group-focus-within:text-accent [@media(hover:hover)_and_(pointer:fine)]:group-hover:text-accent">
                   {project.href ? (
                     <a
                       href={project.href}
@@ -44,7 +44,7 @@ const getImage = (name: string) => {
                       <span class="sr-only"> (opens in a new tab)</span>
                     </a>
                   ) : (
-                    <span class="underline decoration-transparent decoration-2 underline-offset-5 transition-colors duration-150 ease-out group-hover:decoration-line motion-reduce:transition-none">
+                    <span class="underline decoration-transparent decoration-2 underline-offset-5 transition-colors duration-150 ease [@media(hover:hover)_and_(pointer:fine)]:group-hover:decoration-line">
                       {project.title}
                     </span>
                   )}
@@ -85,6 +85,8 @@ const getImage = (name: string) => {
 
   // The cover tilts against the cursor's horizontal speed, as if it hangs from
   // the cursor and its top lags behind, then eases upright once the mouse stops.
+  // Transform is applied directly to the active preview rather than via CSS
+  // custom properties on the container, avoiding subtree style recalculation.
   const MAX_TILT = 6;
   let x = 0;
   let y = 0;
@@ -92,25 +94,31 @@ const getImage = (name: string) => {
   let tilt = 0;
   let targetTilt = 0;
   let frame = 0;
+  let activePreview: HTMLElement | null = null;
+
+  const applyTransform = (preview: HTMLElement, nextTilt: number) => {
+    preview.style.transform = `translate(calc(${x}px - 50%), calc(${y}px - 100% - 16px)) rotate(${nextTilt.toFixed(2)}deg)`;
+  };
 
   const render = () => {
-    list.style.setProperty('--preview-x', `${x}px`);
-    list.style.setProperty('--preview-y', `${y}px`);
-    list.style.setProperty('--preview-tilt', `${tilt}deg`);
+    if (activePreview) applyTransform(activePreview, tilt);
     targetTilt *= 0.92;
     tilt += (targetTilt - tilt) * 0.08;
     if (Math.abs(tilt) < 0.01 && Math.abs(targetTilt) < 0.01) {
       tilt = targetTilt = 0;
-      list.style.setProperty('--preview-tilt', '0deg');
+      if (activePreview) applyTransform(activePreview, 0);
       frame = 0;
     } else {
       frame = requestAnimationFrame(render);
     }
   };
 
-  const moveTo = (nextX: number, nextY: number) => {
+  const moveTo = (preview: HTMLElement | null, nextX: number, nextY: number) => {
+    if (!preview) return;
+    activePreview = preview;
     x = nextX;
     y = nextY;
+    applyTransform(preview, tilt);
     if (!frame) frame = requestAnimationFrame(render);
   };
 
@@ -120,13 +128,16 @@ const getImage = (name: string) => {
 
   list.addEventListener('pointermove', (event) => {
     if (event.pointerType !== 'mouse') return;
+    const row = (event.target as Element).closest<HTMLElement>('.work-item');
+    const preview = row?.querySelector<HTMLElement>('.work-preview') ?? null;
+    if (!preview) return;
     if (lastX !== undefined && !reduceMotion.matches) {
       const speed = event.clientX - lastX;
       targetTilt = Math.max(-MAX_TILT, Math.min(MAX_TILT, -speed * 0.6));
     }
     lastX = event.clientX;
     const rect = list.getBoundingClientRect();
-    moveTo(event.clientX - rect.left, event.clientY - rect.top);
+    moveTo(preview, event.clientX - rect.left, event.clientY - rect.top);
   });
 
   // Keyboard focus has no cursor, so the preview sits above the right end of the focused row instead.
@@ -135,6 +146,6 @@ const getImage = (name: string) => {
     if (!row || row.matches(':hover')) return;
     const rect = list.getBoundingClientRect();
     const rowRect = row.getBoundingClientRect();
-    moveTo(rect.width - 160, rowRect.top - rect.top);
+    moveTo(row.querySelector<HTMLElement>('.work-preview'), rect.width - 160, rowRect.top - rect.top);
   });
 </script>

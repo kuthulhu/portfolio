@@ -1,6 +1,7 @@
 ---
 import { Font, Image } from 'astro:assets';
 import backdrop from '../assets/backgrounds/back1.png';
+import OpenToWork from '../components/OpenToWork.astro';
 import ThemeSwitch from '../components/ThemeSwitch.astro';
 import { site } from '../data/site';
 import '../styles/global.css';
@@ -76,5 +77,10 @@ const ogImage = Astro.site && site.ogImage && new URL(site.ogImage, Astro.site);
 		</div>
 		{/* Full-width content below the column, like the home page's garden. */}
 		<slot name="foot" />
+		{
+			site.openToWork && (
+				<OpenToWork class="fixed right-[max(16px,env(safe-area-inset-right))] bottom-[max(16px,env(safe-area-inset-bottom))] z-20 sm:right-6 sm:bottom-6" />
+			)
+		}
 	</body>
 </html>

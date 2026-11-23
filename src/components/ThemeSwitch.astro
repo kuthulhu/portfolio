@@ -20,7 +20,10 @@ const { class: className } = Astro.props;
   aria-checked="false"
   aria-label="Dark mode"
   data-theme-switch
-  class:list={['block size-12 shrink-0 cursor-pointer rounded-full text-fg', className]}
+  class:list={[
+    'block size-12 shrink-0 cursor-pointer rounded-full text-fg transition-transform duration-150 ease-(--ease-snappy) active:scale-[0.95] motion-reduce:transition-none motion-reduce:active:scale-100',
+    className,
+  ]}
 >
   <span aria-hidden="true" class="lamp block size-12 dark:hidden" style={`--lamp: url(${lampOnUrl})`}></span>
   <span aria-hidden="true" class="lamp hidden size-12 dark:block" style={`--lamp: url(${lampOffUrl})`}></span>

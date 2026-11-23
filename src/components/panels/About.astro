@@ -33,7 +33,7 @@ const getIcon = (name: string) => {
               target="_blank"
               rel="noopener"
               aria-label={`${item.label} (opens in a new tab)`}
-              class="relative isolate flex text-fg before:absolute before:top-1/2 before:left-1/2 before:-z-10 before:size-10 before:-translate-1/2 before:scale-75 before:rounded-full before:bg-line before:opacity-0 before:transition-[opacity,scale] before:duration-200 before:ease-(--ease-snappy) hover:before:scale-100 hover:before:opacity-100 focus-visible:before:scale-100 focus-visible:before:opacity-100"
+              class="relative isolate flex text-fg transition-transform duration-150 ease-(--ease-snappy) active:scale-[0.95] before:absolute before:top-1/2 before:left-1/2 before:-z-10 before:size-10 before:-translate-1/2 before:scale-90 before:rounded-full before:bg-line before:opacity-0 before:transition-[opacity,scale] before:duration-200 before:ease-(--ease-snappy) focus-visible:before:scale-100 focus-visible:before:opacity-100 motion-reduce:transition-none motion-reduce:active:scale-100 motion-reduce:before:scale-100 motion-reduce:before:transition-opacity [@media(hover:hover)_and_(pointer:fine)]:hover:before:scale-100 [@media(hover:hover)_and_(pointer:fine)]:hover:before:opacity-100"
             >
               <Icon width="20" height="20" aria-hidden="true" />
             </a>

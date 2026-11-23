@@ -188,31 +188,33 @@
     }
   }
 
-  /* Work thumbnail: sits centred 16px above the cursor. Uses transform so it
-     doesn't clash with the translate the fade-in animates. It eases in when its
-     row is hovered or focused, and disappears instantly on leave (the transition
-     lives on the shown state only). */
+  /* Work thumbnail: positioned directly on the active preview by Work.astro
+     (avoiding inheritable CSS variables on the parent list). It appears instantly
+     on hover/focus and fades out gently on leave. */
   .work-preview {
-    transform: translate(calc(var(--preview-x, 0px) - 50%), calc(var(--preview-y, 0px) - 100% - 16px))
-      rotate(var(--preview-tilt, 0deg));
     /* Tilts from its bottom edge, the end nearest the cursor. */
     transform-origin: 50% 100%;
     opacity: 0;
-    /* Only the fade-out is timed; the hover state below clears it so previews appear instantly. */
-    transition: opacity 150ms ease-out;
+    /* Only the fade-out is timed; the shown state below clears it so previews appear instantly. */
+    transition: opacity 150ms ease;
   }
 
-  .work-item:hover .work-preview,
   .work-item:focus-within .work-preview {
     opacity: 1;
     transition: none;
   }
 
-  /* Active-tab underline. Its position is set from Tabs.astro; it only glides
-     when a tab is picked, not when it is first placed or the fonts load. */
+  @media (hover: hover) and (pointer: fine) {
+    .work-item:hover .work-preview {
+      opacity: 1;
+      transition: none;
+    }
+  }
+
+  /* Active-tab underline. Positioned via GPU-only transform (translateX + scaleX)
+     from Tabs.astro; glides only on pointer picks, staying instant on keyboard and resize. */
   .tab-indicator {
-    width: var(--tab-width, 0);
-    translate: var(--tab-x, 0) 0;
+    transform-origin: left;
   }
 
   /* Theme switch lamp: the drawing (set as --lamp in ThemeSwitch.astro) masks a
@@ -223,9 +225,7 @@
   }
 
   .tab-indicator[data-animate] {
-    transition-property: translate, width;
-    transition-duration: 240ms;
-    transition-timing-function: var(--ease-snappy);
+    transition: transform 220ms var(--ease-snappy);
   }
 
   /* Cards wait, invisible, until Gallery.astro reveals them on the tab's first
@@ -234,16 +234,18 @@
     opacity: 0;
   }
 
-  /* Camera Roll grid cards. The shadow settles lower on hover and flattens while
-     pressed, like the card being pushed into the page. */
+  /* Camera Roll grid cards. The shadow settles lower on hover and flattens with
+     a subtle press scale while pressed, giving feedback on both mouse and touch. */
   .gallery-thumb {
     box-shadow: var(--card-shadow);
-    /* Gentle and unhurried, so the lift builds instead of popping on. */
-    transition: box-shadow 350ms var(--ease-gentle);
+    transition:
+      box-shadow 200ms var(--ease-snappy),
+      scale 150ms var(--ease-snappy);
   }
 
   .gallery-thumb:active {
     box-shadow: var(--card-shadow-pressed);
+    scale: 0.97;
     transition-duration: 100ms;
   }
 
@@ -255,7 +257,11 @@
 
   @media (prefers-reduced-motion: reduce) {
     .gallery-thumb {
-      transition: none;
+      transition: box-shadow 200ms ease;
+    }
+
+    .gallery-thumb:active {
+      scale: 1;
     }
   }
 
@@ -281,6 +287,23 @@
 
   html:has(.lightbox[open]) {
     overflow: hidden;
+  }
+
+  /* Circular "open to work" sticky badge (OpenToWork.astro). */
+  .open-to-work-ring {
+    animation: open-to-work-spin 16s linear infinite;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .open-to-work-ring {
+      animation: none;
+    }
+  }
+}
+
+@keyframes open-to-work-spin {
+  to {
+    rotate: 360deg;
   }
 }
 

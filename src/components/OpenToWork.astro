@@ -1,0 +1,75 @@
+---
+import ArrowUpRight from '../assets/arrows/arrow-up-right.svg';
+import { socials } from '../data/site';
+
+interface Props {
+  href?: string;
+  label?: string;
+  class?: string;
+}
+
+const linkedin = socials.find((item) => item.icon === 'linkedin');
+const { href = linkedin?.href, label = 'open to work', class: className } = Astro.props;
+
+// Two evenly spaced copies (180° apart) with a "✦" centred halfway between each,
+// so the ring reads cleanly at a compact corner size with no seam gap.
+const copies = [0, 180];
+---
+
+{
+  href && (
+    <a
+      href={href}
+      target="_blank"
+      rel="noopener"
+      aria-label="Open to work — LinkedIn profile (opens in a new tab)"
+      class:list={[
+        'group grid size-22 place-items-center rounded-full text-fg transition-[color,scale] duration-200 ease-(--ease-snappy) active:scale-[0.97] sm:size-24 motion-reduce:transition-colors motion-reduce:active:scale-100 [@media(hover:hover)_and_(pointer:fine)]:hover:text-accent',
+        className,
+      ]}
+    >
+      {/* Each copy sits at 50% along the circle (top) and is rotated around the centre,
+          so the letters and ✦ separators stay symmetrically spaced across every font and browser. */}
+      <svg
+        viewBox="0 0 100 100"
+        aria-hidden="true"
+        class="open-to-work-ring col-start-1 row-start-1 size-full overflow-visible fill-current font-heading select-none"
+      >
+        <defs>
+          <path id="open-to-work-ring" d="M 50,89 A 39,39 0 1,1 50,11 A 39,39 0 1,1 50,89" />
+        </defs>
+        {copies.map((angle) => (
+          <g transform={`rotate(${angle} 50 50)`}>
+            <text
+              font-size="10.6"
+              font-weight="500"
+              letter-spacing="0.16em"
+              dominant-baseline="central"
+              class="uppercase"
+            >
+              <textPath href="#open-to-work-ring" startOffset="50%" text-anchor="middle">
+                {label}
+              </textPath>
+            </text>
+            <text
+              font-size="10.6"
+              dominant-baseline="central"
+              transform="rotate(88.5 50 50)"
+              class="fill-accent"
+            >
+              <textPath href="#open-to-work-ring" startOffset="50%" text-anchor="middle">
+                ✦
+              </textPath>
+            </text>
+          </g>
+        ))}
+      </svg>
+      <ArrowUpRight
+        width="16"
+        height="16"
+        aria-hidden="true"
+        class="pointer-events-none col-start-1 row-start-1 text-muted transition-[color,scale] duration-200 ease-(--ease-snappy) motion-reduce:transition-colors motion-reduce:group-hover:scale-100 [@media(hover:hover)_and_(pointer:fine)]:group-hover:scale-115 [@media(hover:hover)_and_(pointer:fine)]:group-hover:text-accent"
+      />
+    </a>
+  )
+}
